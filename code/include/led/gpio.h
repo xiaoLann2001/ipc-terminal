@@ -1,6 +1,10 @@
 #ifndef __GPIO_H_
 #define __GPIO_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -159,4 +163,8 @@ int gpio_set_active_low(enum Gpio_num num, int active_low);
  */
 int gpio_wait_for_edge(enum Gpio_num num, int timeout_ms);
 
+#ifdef __cplusplus
+}
 #endif
+
+#endif // __GPIO_H_
