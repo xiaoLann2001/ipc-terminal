@@ -1,8 +1,24 @@
-#include "gpio.h"
+#include "gpio/gpio.h"
 
 // Utility function to generate GPIO file path
 void gpio_generate_path(char *path, int gpio_num, const char *filename) {
     sprintf(path, GPIO_PATH "gpio%d/%s", gpio_num, filename);
+}
+
+// Check if GPIO is already exported
+int gpio_export_check(int gpio_num) {
+    char gpio_path[64];
+
+    // Generate the GPIO path, e.g., /sys/class/gpio/gpio54
+    sprintf(gpio_path, GPIO_PATH "gpio%d", gpio_num);
+
+    // Check if the GPIO already exists
+    if (access(gpio_path, F_OK) == 0) {
+        fprintf(stdout, "GPIO%d already exported\n", gpio_num);
+        return 0;  // GPIO already exported
+    }
+
+    return -1;  // GPIO not exported yet
 }
 
 // Initialize GPIO (export and set direction)
@@ -10,6 +26,11 @@ int gpio_init(enum Gpio_num num, enum Gpio_direction direct) {
     char path[64];
     int fd, ret;
     char buffer[4];
+
+    // If GPIO_num exists, skip export
+    if (gpio_export_check(num) == 0) {
+        return 0;
+    }
 
     // Export GPIO
     fd = open(GPIO_PATH "export", O_WRONLY);

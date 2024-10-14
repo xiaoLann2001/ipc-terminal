@@ -1,5 +1,5 @@
-#ifndef __GPIO_H_
-#define __GPIO_H_
+#ifndef __GPIO_H__
+#define __GPIO_H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -16,10 +16,39 @@ extern "C" {
 
 // Define GPIO numbers
 enum Gpio_num {
-    GPIO1_C4_d = 52,
-    GPIO1_C5_d = 53,
-    GPIO1_C6_d = 54,
+    GPIO1_B2_d = 42,
+    GPIO1_B3_u = 43,
+
     GPIO1_C7_d = 55,
+    GPIO1_C6_d = 54,
+    GPIO1_C5_d = 53,
+    GPIO1_C4_d = 52,
+
+    GPIO1_D2_d = 58,
+    GPIO1_D3_d = 59,
+    GPIO1_A2_d = 34,
+    GPIO1_C0_d = 48,
+
+    GPIO1_C1_d = 49,
+    GPIO1_C2_d = 50,
+    GPIO1_C3_d = 51,
+    GPIO0_A4_d = 4,
+
+    GPIO1_D0_d = 56,
+    GPIO1_D1_d = 57,
+
+    GPIO4_C1_z = 145,
+    GPIO4_C0_z = 144,
+
+    GPIO3_A1_u = 97,
+
+    GPIO3_A3_u = 99,
+    GPIO3_A2_u = 98,
+    GPIO3_A4_d = 100,
+    GPIO3_A5_u = 101,
+
+    GPIO3_A7_u = 103,
+    GPIO3_A6_u = 102,
 };
 
 // Define GPIO directions
@@ -55,6 +84,16 @@ struct Gpio_status {
  * @param filename The filename to append to the GPIO path.
  */
 void gpio_generate_path(char *path, int gpio_num, const char *filename);
+
+/**
+ * @brief Check if the GPIO pin is already exported.
+ *
+ * This function checks if the GPIO pin is already exported and available for use.
+ *
+ * @param num The GPIO pin number to check.
+ * @return 0 if the GPIO pin is already exported, -1 if not.
+ */
+int gpio_export_check(int gpio_num);
 
 /**
  * @brief Initialize the GPIO pin and set its direction.

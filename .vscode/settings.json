@@ -1,5 +1,8 @@
 {
     "files.associations": {
-        "gpio.h": "c"
+        "gpio.h": "c",
+        "ratio": "c",
+        "unistd.h": "c",
+        "random": "c"
     }
 }
