@@ -22,9 +22,9 @@
 // #include <sys/mman.h>
 // #include <cstdio>
 // #include <cstdlib>
-// #include <thread>
-// #include <mutex>
-// #include <condition_variable>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
 
 // for opencv
 #include <opencv2/core/core.hpp>

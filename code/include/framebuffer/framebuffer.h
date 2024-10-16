@@ -39,7 +39,9 @@ int framebuffer_get_resolution(int *width, int *height, int *bit_depth);
 
 int framebuffer_set_pixel(int x, int y, uint32_t color);
 
-int framebuffer_set_frame(uint32_t *frame, int off_x, int off_y, int img_width, int img_height, enum FB_COLOR_FORMAT format);
+int framebuffer_set_region(uint32_t *frame, int off_x, int off_y, int img_width, int img_height, enum FB_COLOR_FORMAT format);
+
+int framebuffer_set_frame_rgb565(uint16_t *frame, int width, int height);
 
 int framebuffer_refresh(void);
 

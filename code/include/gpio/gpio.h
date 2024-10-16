@@ -12,10 +12,12 @@ extern "C" {
 #include <fcntl.h>
 #include <poll.h>
 
-#define GPIO_PATH "/sys/class/gpio/"
+// #define RV1103_PLUS
+#define RV1106_MAX
 
-// Define GPIO numbers
+#ifdef RV1103_PLUS
 enum Gpio_num {
+    // left
     GPIO1_B2_d = 42,
     GPIO1_B3_u = 43,
 
@@ -37,6 +39,7 @@ enum Gpio_num {
     GPIO1_D0_d = 56,
     GPIO1_D1_d = 57,
 
+    // right
     GPIO4_C1_z = 145,
     GPIO4_C0_z = 144,
 
@@ -50,6 +53,51 @@ enum Gpio_num {
     GPIO3_A7_u = 103,
     GPIO3_A6_u = 102,
 };
+
+#endif  // RV1103_PLUS
+
+#ifdef RV1106_MAX
+enum Gpio_num {
+    // left
+    GPIO1_B2_d = 42,
+    GPIO1_B3_u = 43,
+
+    GPIO1_C7_d = 55,
+    GPIO1_C6_d = 54,
+    GPIO1_C5_d = 53,
+    GPIO1_C4_d = 52,
+
+    GPIO1_D2_d = 58,
+    GPIO1_D3_d = 59,
+    GPIO2_B1_d = 73,
+    GPIO1_C0_d = 48,
+
+    GPIO1_C1_d = 49,
+    GPIO1_C2_d = 50,
+    GPIO1_C3_d = 51,
+    GPIO2_B0_d = 72,
+
+    GPIO1_D0_d = 56,
+    GPIO1_D1_d = 57,
+
+    // right
+    GPIO2_A7_d = 71,
+
+    GPIO4_C1_z = 145,
+    GPIO4_C0_z = 144,
+
+    GPIO2_A6_d = 70,
+
+    GPIO2_A3_d = 67,
+    GPIO2_A2_d = 66,
+    GPIO2_A1_d = 65,
+    GPIO2_A0_d = 64,
+
+    GPIO2_A5_d = 69,
+    GPIO2_A4_d = 68,
+};
+
+#endif  // RV1106_MAX
 
 // Define GPIO directions
 enum Gpio_direction {

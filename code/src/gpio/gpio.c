@@ -1,5 +1,7 @@
 #include "gpio/gpio.h"
 
+#define GPIO_PATH "/sys/class/gpio/"
+
 // Utility function to generate GPIO file path
 void gpio_generate_path(char *path, int gpio_num, const char *filename) {
     sprintf(path, GPIO_PATH "gpio%d/%s", gpio_num, filename);

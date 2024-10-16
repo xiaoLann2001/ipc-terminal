@@ -185,7 +185,7 @@ uint16_t convert_color_bit16(uint32_t color, enum FB_COLOR_FORMAT format) {
  * @param format 帧数据的颜色格式。
  * @return 成功返回 0，失败返回 -1。
  */
-int framebuffer_set_frame(uint32_t *frame, int off_x, int off_y, int img_width, int img_height, enum FB_COLOR_FORMAT format) {
+int framebuffer_set_region(uint32_t *frame, int off_x, int off_y, int img_width, int img_height, enum FB_COLOR_FORMAT format) {
     if (fb_fd == -1) {
         fprintf(stderr, "Framebuffer not initialized\n");
         return -1;
@@ -227,7 +227,22 @@ int framebuffer_set_frame(uint32_t *frame, int off_x, int off_y, int img_width, 
     return 0;
 }
 
+int framebuffer_set_frame_rgb565(uint16_t *frame, int width, int height) {
+    if (fb_fd == -1) {
+        fprintf(stderr, "Framebuffer not initialized\n");
+        return -1;
+    }
 
+    // 假设输入数据是目标分辨率的，直接使用 memcpy 复制到 framebuffer
+    if (vinfo.bits_per_pixel == 16) {
+        memcpy(fb_ptr, frame, width * height * 2);
+    } else {
+        fprintf(stderr, "Unsupported bit depth: %d\n", vinfo.bits_per_pixel);
+        return -1;
+    }
+
+    return 0;
+}
 
 /**
  * @brief 刷新 Framebuffer (如果需要的话)。

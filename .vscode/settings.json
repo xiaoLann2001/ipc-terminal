@@ -3,6 +3,12 @@
         "gpio.h": "c",
         "ratio": "c",
         "unistd.h": "c",
-        "random": "c"
+        "random": "c",
+        "luckfox_mpi.h": "c",
+        "vector": "cpp",
+        "video_capture.h": "c",
+        "framebuffer.h": "c",
+        "condition_variable": "cpp",
+        "thread": "cpp"
     }
 }

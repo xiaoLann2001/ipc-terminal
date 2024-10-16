@@ -1,43 +1,4 @@
-## ipc板端软件
+### 瑞芯微RV1106平台的远程监控方案架构图
+![Alt text](%E8%BF%9C%E7%A8%8B%E7%9B%91%E6%8E%A7.png)
 
-### 工程结构
-
-#### 树形图
-
-* ipc-terminal
-    * code
-        * src
-            * led
-                * `led.cpp`
-                * `gpio.cpp`
-            * display
-                * `display.cpp`
-                * `framebuffer.cpp`
-            * pantilt
-                * `pantilt.cpp`
-                * `pwm.cpp`
-            * video_capture
-                * `video_capture.cpp`
-            * rtsp
-                * `rtsp.cpp`
-        * include
-            * `global.h`
-            * led
-                * `led.h`
-                * `gpio.h`
-            * display
-                * `display.h`
-                * `framebuffer.h`
-            * pantilt
-                * `pantilt.h`
-                * `pwm.h`
-            * video_capture
-                * `video_capture.h`
-            * rtsp
-                * `rtsp.h`
-    * include
-    * lib
-    * build
-    * install
-
-#### 解释
+### 本工程是网络摄像头摄像头端的板端软件
