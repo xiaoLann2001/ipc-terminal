@@ -24,11 +24,19 @@ find_package(Threads REQUIRED)
 # Add subdirectories for third-party and source code
 link_directories(${CMAKE_CURRENT_SOURCE_DIR}/lib)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ 3rdparty.out)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/code/src)
+# add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/code/src)
 
 # Collect the main source file
-file(GLOB SRC_FILES "main.cpp")
-file(GLOB SRC_FILES "main.cpp" "code/src/video_capture/*.cpp")
+set(SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/code/src")
+file(GLOB SRC_FILES "main.cpp" 
+                    ${SRC_DIR}/video/video.cpp
+                    ${SRC_DIR}/video/luckfox_mpi.cpp
+                    ${SRC_DIR}/gpio/gpio.c
+                    ${SRC_DIR}/led/led.c
+                    ${SRC_DIR}/display/framebuffer.c
+                    # ${SRC_DIR}/control/control.c
+
+)
 add_executable(${PROJECT_NAME} ${SRC_FILES})
 
 # Set compile options for debugging and architecture-specific definitions
@@ -50,9 +58,16 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 target_link_libraries(${PROJECT_NAME} PRIVATE
     ${OpenCV_LIBS}
     Threads::Threads
-    led
-    fb
-    vcap
+    # led
+    # fb
+    # video
+    rockiva
+    sample_comm
+    rockit
+    rockchip_mpp
+    rkaiq
+    pthread
+    rtsp
 )
 
 # Set include directories for the project
@@ -76,8 +91,8 @@ set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/install")
 # Install the binary into the install directory
 install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_PREFIX})
 
-# Install the shared libraries from code/lib into install/lib
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/code/lib/ DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-        FILES_MATCHING PATTERN "*.so"   # Only match shared libraries
-        PATTERN "*.a" EXCLUDE           # Exclude static libraries if not needed
-)
+# # Install the shared libraries from code/lib into install/lib
+# install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/code/lib/ DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+#         FILES_MATCHING PATTERN "*.so"   # Only match shared libraries
+#         PATTERN "*.a" EXCLUDE           # Exclude static libraries if not needed
+# )

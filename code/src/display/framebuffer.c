@@ -1,4 +1,4 @@
-#include "framebuffer/framebuffer.h"
+#include "display/framebuffer.h"
 
 static int fb_fd = -1;  // Framebuffer 文件描述符
 static struct fb_var_screeninfo vinfo;  // 可变的屏幕信息

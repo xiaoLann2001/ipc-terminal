@@ -1,29 +1,32 @@
 
 #include "ipc_global.h"
 
-#include "framebuffer/framebuffer.h"
-#include "video_capture/video_capture.h"
+#include "display/framebuffer.h"
+#include "video/video.h"
+#include "rk_debug.h"
 
 bool quit = false;
+std::mutex mtx;
+std::condition_variable cond_var;
+bool frame_ready = false;  // 标记是否有新的帧
 
 static void sigterm_handler(int sig) {
 	fprintf(stderr, "Caught signal %d, cleaning up...\n", sig);
 	quit = true;
+    cond_var.notify_all();  // 通知显示线程退出
 }
-
-// 互斥锁和条件变量
-std::mutex mtx;
-std::condition_variable cond_var;
-bool frame_ready = false;  // 标记是否有新的帧
 
 void display_on_fb(cv::Mat* frame) {
 	cv::Mat rotated_frame, resized_frame, rgb565;
     int width, height, bit_depth;
     framebuffer_get_resolution(&width, &height, &bit_depth);
 
-	while (1) {
+	while (!quit) {
 		std::unique_lock<std::mutex> ulock(mtx);
         cond_var.wait(ulock, [] { return frame_ready; });  // 等待新帧
+        if (!quit){
+            break;
+        }
 
 		// show on /dev/fb0
 		// 旋转图像
@@ -48,44 +51,60 @@ int main() {
     signal(SIGINT, sigterm_handler);
     signal(SIGTERM, sigterm_handler);
 
+    RK_S32 s32Ret = RK_SUCCESS;
     int width = 720;
     int height = 480;
+    cv::Mat frame(height, width, CV_8UC3);		
+    cv::Mat frame_copy(height, width, CV_8UC3);
 
-    printf("---------------1");
+    //h264_frame	
+	VENC_STREAM_S stFrame;	
+	stFrame.pstPack = (VENC_PACK_S *)malloc(sizeof(VENC_PACK_S));
+ 	VIDEO_FRAME_INFO_S h264_frame;
+ 	VIDEO_FRAME_INFO_S stVpssFrame;
 
-    videocapture_init(width, height);
-
-    printf("---------------2");
+    video_rtsp_init(554);
+    video_capture_init(width, height);
+    video_encode_init(width, height, RK_VIDEO_ID_AVC);
 
     framebuffer_init(FB_DEVICE);
 
-    printf("---------------3");
-
-    cv::Mat frame_copy;
     std::thread t_display(display_on_fb, &frame_copy);
 
-    VIDEO_FRAME_INFO_S stVpssFrame;
     while (!quit) {
-        printf("---------------4");
 
-        void *data = videocapture_get_frame(&stVpssFrame);
+        // void *data = video_capture_get_frame(&stVpssFrame);
 
-        printf("---------------5");
+        // if (data) {
+        //     frame.data = (uchar *)data;
+        //     frame_copy = frame;	
+        //     frame_ready = true;
+        //     cond_var.notify_one();
+        // }
 
-        cv::Mat frame(height, width, CV_8UC3, data);		
-        
-        frame_copy = frame;	
-        frame_ready = true;
-        cond_var.notify_one();
+        s32Ret = video_encode(&stVpssFrame, &stFrame);
+        if (RK_SUCCESS == s32Ret) {
+            video_rtsp_send(&stFrame);
+        }
 
-        videocapture_release_frame(&stVpssFrame);
+        s32Ret = video_capture_release_frame(&stVpssFrame);
+        if (RK_SUCCESS == s32Ret) {
+			RK_LOGE("RK_MPI_VI_ReleaseChnFrame fail %x", s32Ret);
+        }
 
-        printf("----------------6");
+        s32Ret = video_encode_release_frame(&stFrame);
+        if (RK_SUCCESS == s32Ret) {
+			RK_LOGE("RK_MPI_VENC_ReleaseStream fail %x", s32Ret);
+        }
     }
 
     t_display.join();
 
-    videocapture_cleanup();
+    framebuffer_deinit();
+    video_capture_cleanup();
+    video_encode_cleanup();
+    free(stFrame.pstPack);
+    video_rtsp_cleanup();
 
     return 0;
 }

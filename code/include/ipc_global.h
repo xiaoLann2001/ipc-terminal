@@ -1,10 +1,9 @@
-#ifndef __GLOBAL_H_
-#define __GLOBAL_H_
+#ifndef __IPC_GLOBAL_H_
+#define __IPC_GLOBAL_H_
 
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
-// #include <getopt.h>
 #include <pthread.h>
 #include <signal.h>
 #include <stdbool.h>
@@ -16,12 +15,6 @@
 #include <unistd.h>
 #include <vector>
 
-// for display
-// #include <linux/fb.h>
-// #include <sys/ioctl.h>
-// #include <sys/mman.h>
-// #include <cstdio>
-// #include <cstdlib>
 #include <thread>
 #include <mutex>
 #include <condition_variable>
