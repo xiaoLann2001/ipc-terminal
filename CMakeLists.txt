@@ -27,9 +27,8 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ 3rdparty.out)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/code/src)
 
 # Collect the main source file
-file(GLOB SRC_FILES "main.cpp" 
-                    # "code/src/video_capture/*.cpp"
-)
+file(GLOB SRC_FILES "main.cpp")
+file(GLOB SRC_FILES "main.cpp" "code/src/video_capture/*.cpp")
 add_executable(${PROJECT_NAME} ${SRC_FILES})
 
 # Set compile options for debugging and architecture-specific definitions
@@ -51,12 +50,6 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 target_link_libraries(${PROJECT_NAME} PRIVATE
     ${OpenCV_LIBS}
     Threads::Threads
-    rockiva
-    sample_comm
-    rockit
-    rockchip_mpp
-    rkaiq
-    pthread
     led
     fb
     vcap

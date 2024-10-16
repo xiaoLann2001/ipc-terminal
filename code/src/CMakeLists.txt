@@ -58,19 +58,18 @@ add_definitions(-DRV1106_1103)
 target_compile_options(vcap PRIVATE -g -Wall)
 
 # 设置链接目录
-set(LIB_DIR ${CMAKE_SOURCE_DIR}/lib)
-link_directories(${LIB_DIR})
+link_directories(${CMAKE_CURRENT_SOURCE_DIR}../../lib)
 message(STATUS "Library directories: ${LIB_DIR}")
 
 set(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath-link,${CMAKE_SOURCE_DIR}/lib:/usr/lib")
 
 # 将必要的库链接到 vcap 库
 target_link_libraries(vcap PUBLIC 
-    ${LIB_DIR}/librockiva.so
-    ${LIB_DIR}/libsample_comm.a
-    ${LIB_DIR}/librockit.so
-    ${LIB_DIR}/librockchip_mpp.so
-    ${LIB_DIR}/librkaiq.so
+    rockiva
+    sample_comm
+    rockit
+    rockchip_mpp
+    rkaiq
 )
 
 
