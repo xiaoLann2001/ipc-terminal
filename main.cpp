@@ -73,14 +73,14 @@ int main() {
 
     while (!quit) {
 
-        // void *data = video_capture_get_frame(&stVpssFrame);
+        void *data = video_capture_get_frame(&stVpssFrame);
 
-        // if (data) {
-        //     frame.data = (uchar *)data;
-        //     frame_copy = frame;	
-        //     frame_ready = true;
-        //     cond_var.notify_one();
-        // }
+        if (data) {
+            frame.data = (uchar *)data;
+            frame_copy = frame;	
+            frame_ready = true;
+            cond_var.notify_one();
+        }
 
         s32Ret = video_encode(&stVpssFrame, &stFrame);
         if (RK_SUCCESS == s32Ret) {
