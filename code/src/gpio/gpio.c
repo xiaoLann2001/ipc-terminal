@@ -114,6 +114,7 @@ void gpio_write(enum Gpio_num num, int value) {
     int fd;
 
     gpio_generate_path(path, num, "value");
+    fprintf(stdout, "Writing to %s\n", path);
     fd = open(path, O_WRONLY);
     if (fd < 0) {
         perror("Failed to open value file");

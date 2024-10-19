@@ -1,41 +1,60 @@
-#ifndef __DISPLAY_H__
-#define __DISPLAY_H__
+#ifndef DISPLAY_H
+#define DISPLAY_H
 
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <fcntl.h>
+#include <queue>
+#include <mutex>
+#include <thread>
+#include <condition_variable>
+#include <opencv2/opencv.hpp>
 
-#include <linux/fb.h>
-#include <sys/ioctl.h>
-#include <sys/mman.h>
+class Display {
+public:
+    Display();
+    ~Display();
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+    enum class PushResult {
+        Success,
+        FrameTypeError,
+        QueueFull
+    };
 
-// 初始化 display 模块
-int display_init(void);
+    void get_resolution(int* width, int* height, int* bit_depth) {
+        *width = this->width;
+        *height = this->height;
+        *bit_depth = this->bit_depth;
+    }
 
-// 释放 display 模块资源
-void display_deinit(void);
+    // 接收帧并将其放入队列
+    void push_frame(const cv::Mat& frame);
 
-// 在屏幕上显示图像
-int display_show_image(const char *image_path, int x, int y);
+    // 启动显示线程
+    void start_display();
 
-// 绘制文本
-int display_draw_text(const char *text, int x, int y, uint32_t color);
+    // 暂停显示
+    void pause_display();
 
-// 绘制图形，比如矩形或线条
-int display_draw_rectangle(int x, int y, int width, int height, uint32_t color);
+    // 继续显示
+    void resume_display();
 
-// 刷新屏幕，确保所有绘图操作生效
-int display_refresh(void);
+private:
+    // 显示线程的运行函数
+    void display_on_fb();
 
-#ifdef __cplusplus
-}
-#endif
+    // 线程管理
+    std::thread display_thread;
+    bool flag_stop = false;
+    bool flag_pause = false;
+    bool flag_quit = false;
 
-#endif // __DISPLAY_H__
+    // 线程安全的队列和同步机制
+    std::queue<cv::Mat> frame_queue;
+    std::mutex mtx_display;
+    std::condition_variable cond_var_display;
+
+    // 帧缓冲参数
+    int width = 0;
+    int height = 0;
+    int bit_depth = 0;
+};
+
+#endif // DISPLAY_H

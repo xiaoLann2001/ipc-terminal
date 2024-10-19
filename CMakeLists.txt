@@ -33,9 +33,10 @@ file(GLOB SRC_FILES "main.cpp"
                     ${SRC_DIR}/video/luckfox_mpi.cpp
                     ${SRC_DIR}/gpio/gpio.c
                     ${SRC_DIR}/led/led.c
+                    ${SRC_DIR}/display/display.cpp
                     ${SRC_DIR}/display/framebuffer.c
-                    # ${SRC_DIR}/control/control.c
-
+                    ${SRC_DIR}/control/control.cpp
+                    ${SRC_DIR}/network/network.cpp
 )
 add_executable(${PROJECT_NAME} ${SRC_FILES})
 
