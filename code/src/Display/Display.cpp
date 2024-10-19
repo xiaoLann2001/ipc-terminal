@@ -1,7 +1,7 @@
-#include "display/display.h"
+#include "Display/Display.h"
 
 extern "C" {
-    #include "display/framebuffer.h"
+    #include "Display/framebuffer.h"
 }
 
 Display::Display() {

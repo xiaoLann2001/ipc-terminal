@@ -8,6 +8,7 @@ int led_init(enum Led_num led) {
         fprintf(stderr, "Failed to initialize LED: %d\n", led);
         return -1;
     }
+    gpio_write(led, 1);  // Turn off the LED initially
     printf("LED %d initialized\n", led);
     return 0;
 }

@@ -1,4 +1,4 @@
-#include "control/control.h"
+#include "Control/Control.h"
 
 /**
  * @brief 控制类构造函数
@@ -6,8 +6,42 @@
 Control::Control() {
     led_init(LED0);
     led_init(LED1);
+
+    // // 显示类初始化
+    // Display *display = new Display();
+
+    // int width;
+    // int height;
+    // int bit_depth;
+    // display->get_resolution(&width, &height, &bit_depth);
+    // cv::Mat frame(height, width, CV_8UC3);
+
+    // RK_S32 s32Ret = RK_SUCCESS;
+
+    // // 视频采集初始化
+    // video_capture_init(width, height);
+
+    // while (!quit) {
+    //     VIDEO_FRAME_INFO_S stVpssFrame;
+    //     void *data = video_capture_get_frame(&stVpssFrame);
+
+    //     if (data) {
+    //         // 复制采集到的帧并传给Display类显示
+    //         frame.data = (uchar *)data;
+    //         display->push_frame(frame);
+    //     }
+
+    //     s32Ret = video_capture_release_frame(&stVpssFrame);
+    //     if (RK_SUCCESS != s32Ret) {
+    //         RK_LOGE("RK_MPI_VI_ReleaseChnFrame fail %x", s32Ret);
+    //     }
+    // }
+
+    // printf("Exit\n");
+    // delete display;
+    // video_capture_cleanup();
     
-    init();
+    // init();
 }
 
 Control::~Control() {
@@ -49,9 +83,11 @@ void Control::init() {
  * @return 解析后的ControlSignal结构
  */
 ControlSignal Control::parseSignal(const std::string& data) {
+    // 解析数据，格式为 "module_id opcode param"
     ControlSignal signal;
     std::istringstream ss(data);
     ss >> signal.module_id >> signal.opcode >> signal.param;
+
     // 判断解析的操作码是否合法
     switch (signal.module_id) {
         case ID_LED:
@@ -61,8 +97,8 @@ ControlSignal Control::parseSignal(const std::string& data) {
                 signal.opcode != OP_LED_BLINK
                 ) {
                 std::cerr << "Unknown LED opcode: " << signal.opcode << std::endl;
-            } else if (signal.param != LED0 && 
-                       signal.param != LED1) {
+            } else if (signal.param != PA_LED0 && 
+                       signal.param != PA_LED1) {
                 std::cerr << "Unknown LED param: " << signal.param << std::endl;
             }
             break;
@@ -127,6 +163,7 @@ void Control::dispatchSignal(const ControlSignal& signal) {
     }
 }
 
+// 接收网络数据槽函数
 void Control::onNetworkReceived(const std::string& data) {
     std::cout << "Received: " << data << std::endl;
     ControlSignal signal = parseSignal(data);
@@ -136,8 +173,9 @@ void Control::onNetworkReceived(const std::string& data) {
     dispatchSignal(signal);
 }
 
+// 处理 LED 控制
 void Control::handleLEDControl(int opcode, int param) {
-    int num = LED0 - param;
+    int num = LED0 + param;
     switch (opcode) {
         case OP_LED_ON:
             std::cout << "LED" << param << " is turned ON" << std::endl;
@@ -145,7 +183,7 @@ void Control::handleLEDControl(int opcode, int param) {
             break;
         case OP_LED_OFF:
             std::cout << "LED" << param << " is turned OFF" << std::endl;
-            led_off((Led_num)num);  // 同样传递具体灯号
+            led_off((Led_num)num);
             break;
         case OP_LED_TOGGLE:
             std::cout << "LED" << param << " toggled" << std::endl;
@@ -160,7 +198,7 @@ void Control::handleLEDControl(int opcode, int param) {
     }
 }
 
-
+// 处理 Pantilt 控制
 void Control::handlePantiltControl(int opcode, int param) {
     switch (opcode) {
         case OP_PANTILT_UP:
@@ -180,6 +218,7 @@ void Control::handlePantiltControl(int opcode, int param) {
     }
 }
 
+// 处理 Display 控制
 void Control::handleDisplayControl(int opcode, int param) {
     switch (opcode) {
         case OP_DISPLAY_START:

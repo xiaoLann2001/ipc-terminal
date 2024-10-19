@@ -8,10 +8,10 @@
 #include "Signal/Signal.h"
 
 #include "led/led.h"
-#include "pantilt/pantilt.h"
-#include "video/video.h"
-#include "display/display.h"
-#include "network/network.h"
+#include "Pantilt/Pantilt.h"
+#include "Video/Video.h"
+#include "Display/Display.h"
+#include "Network/Network.h"
 
 struct ControlSignal {
     int module_id;
@@ -34,8 +34,8 @@ enum LEDOpcode {
 };
 
 enum LEDParam {
-    PA_LED0 = LED0,
-    PA_LED1 = LED1
+    PA_LED0 = 0,
+    PA_LED1
 };
 
 enum PantiltOpcode {

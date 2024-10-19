@@ -9,8 +9,8 @@ extern "C" {
 
 // LED Resources
 enum Led_num {
-    LED0 = GPIO1_C7_d,
-    LED1 = GPIO1_C6_d,
+    LED0 = GPIO1_C6_d,
+    LED1 = GPIO1_C7_d,
 };
 
 /**

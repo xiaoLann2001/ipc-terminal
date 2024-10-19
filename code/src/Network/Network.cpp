@@ -1,4 +1,4 @@
-#include "network/network.h"
+#include "Network/Network.h"
 
 // 构造函数：初始化网络并启动收发线程
 Network::Network(const std::string& server_ip, int server_port)

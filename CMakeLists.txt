@@ -29,14 +29,17 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ 3rdparty.out)
 # Collect the main source file
 set(SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/code/src")
 file(GLOB SRC_FILES "main.cpp" 
-                    ${SRC_DIR}/video/video.cpp
-                    ${SRC_DIR}/video/luckfox_mpi.cpp
+                    ${SRC_DIR}/Network/Network.cpp
+                    ${SRC_DIR}/Control/Control.cpp
+
                     ${SRC_DIR}/gpio/gpio.c
                     ${SRC_DIR}/led/led.c
-                    ${SRC_DIR}/display/display.cpp
-                    ${SRC_DIR}/display/framebuffer.c
-                    ${SRC_DIR}/control/control.cpp
-                    ${SRC_DIR}/network/network.cpp
+
+                    ${SRC_DIR}/Display/Display.cpp
+                    ${SRC_DIR}/Display/framebuffer.c
+                    
+                    ${SRC_DIR}/Video/Video.cpp
+                    ${SRC_DIR}/Video/luckfox_mpi.cpp
 )
 add_executable(${PROJECT_NAME} ${SRC_FILES})
 
