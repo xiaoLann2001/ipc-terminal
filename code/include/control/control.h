@@ -1,32 +1,83 @@
 #ifndef __CONTROL_H__
 #define __CONTROL_H__
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <iostream>
+#include <string>
+#include <sstream>
 
-typedef struct {
+#include "Signal/Signal.h"
+
+#include "led/led.h"
+#include "pantilt/pantilt.h"
+#include "video/video.h"
+#include "display/display.h"
+#include "network/network.h"
+
+struct ControlSignal {
     int module_id;
     int opcode;
     int param;
-} ControlSignal;
+};
 
-/**
- * @brief 初始化控制模块
- */
-void control_init();
+enum ModuleID {
+    ID_LED = 1,
+    ID_PANTILT,
+    ID_VIDEO,
+    ID_DISPLAY
+};
 
-/**
- * @brief 处理并解析接收到的控制信号
- * @param data 从网络接收到的数据
- * @return 解析后的ControlSignal结构
- */
-ControlSignal control_parse_signal(const char *data);
+enum LEDOpcode {
+    OP_LED_ON = 0,
+    OP_LED_OFF,
+    OP_LED_TOGGLE,
+    OP_LED_BLINK
+};
 
-/**
- * @brief 分发控制信号到相应的模块
- * @param signal 已解析的控制信号
- */
-void control_dispatch_signal(const ControlSignal *signal);
+enum LEDParam {
+    PA_LED0 = LED0,
+    PA_LED1 = LED1
+};
 
-#endif // CONTROL_H
+enum PantiltOpcode {
+    OP_PANTILT_UP = 0,
+    OP_PANTILT_DOWN,
+    OP_PANTILT_LEFT,
+    OP_PANTILT_RIGHT
+};
+
+enum DisplayOpcode {
+    OP_DISPLAY_START = 0,
+    OP_DISPLAY_PAUSE,
+    OP_DISPLAY_RESUME,
+};
+
+class Control {
+public:
+    Control();
+    ~Control();
+
+    Signal<ControlSignal> signal_control_received;
+
+    // 接收网络数据槽函数
+    void onNetworkReceived(const std::string& data);
+
+private:
+    ControlSignal parseSignal(const std::string& data);
+
+    void dispatchSignal(const ControlSignal& signal);
+
+    void init();
+
+    // 函数指针数组，用于存储不同模块的操作处理函数
+    using ControlFunction = std::function<void(int)>;
+    std::vector<ControlFunction> led_control_functions;
+    std::vector<ControlFunction> pantilt_control_functions;
+    std::vector<ControlFunction> display_control_functions;
+
+    // 定义各个模块的处理函数
+    void handleLEDControl(int opcode, int param);
+    void handlePantiltControl(int opcode, int param);
+    void handleDisplayControl(int opcode, int param);
+};
+
+#endif // __CONTROL_H__

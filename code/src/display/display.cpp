@@ -1,154 +1,104 @@
-#include "display.h"
-#include "framebuffer.h"
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-#include <jpeglib.h> // 用于处理 JPEG 图像格式
-#include <errno.h>
+#include "display/display.h"
 
-static int fb_initialized = 0; // 布尔值，标记 framebuffer 是否已初始化
-
-/**
- * @brief 初始化 display 模块。
- *
- * @return 成功返回 0，失败返回 -1。
- */
-int display_init(void) {
-    if (framebuffer_init(FB_DEVICE) != 0) {
-        return -1; // 初始化 framebuffer 失败
-    }
-    fb_initialized = 1;
-    return 0;
+extern "C" {
+    #include "display/framebuffer.h"
 }
 
-/**
- * @brief 释放 display 模块资源。
- */
-void display_deinit(void) {
-    if (fb_initialized) {
-        framebuffer_deinit();
-        fb_initialized = 0;
-    }
+Display::Display() {
+    // 初始化 framebuffer 设备，自动获取分辨率和色深
+    framebuffer_init(FB_DEVICE);
+    framebuffer_get_resolution(&(this->width), &(this->height), &(this->bit_depth));
+
+    flag_pause = false;
+
+    // 启动显示线程
+    display_thread = std::thread(&Display::display_on_fb, this);
 }
 
-/**
- * @brief 显示图像到屏幕。
- *
- * @param image_path 图像文件的路径（支持 JPEG 格式）。
- * @param x 图像在屏幕上的 X 坐标。
- * @param y 图像在屏幕上的 Y 坐标。
- * @return 成功返回 0，失败返回 -1。
- */
-int display_show_image(const char *image_path, int x, int y) {
-    if (!fb_initialized) {
-        return -1; // framebuffer 未初始化
+Display::~Display() {
+    // 设置退出标志，并唤醒所有等待的线程
+    {
+        // 作用域自动加锁，超出作用域自动解锁
+        std::lock_guard<std::mutex> lock(mtx_display);
+        flag_quit = true;
+    }
+    cond_var_display.notify_all();
+
+    // 等待线程结束
+    if (display_thread.joinable()) {
+        display_thread.join();
     }
 
-    // 打开图像文件
-    FILE *file = fopen(image_path, "rb");
-    if (!file) {
-        perror("Error opening image file");
-        return -1;
-    }
-
-    // 初始化 JPEG 解码器
-    struct jpeg_decompress_struct cinfo;
-    struct jpeg_error_mgr jerr;
-
-    cinfo.err = jpeg_std_error(&jerr);
-    jpeg_create_decompress(&cinfo);
-    jpeg_stdio_src(&cinfo, file);
-    jpeg_read_header(&cinfo, TRUE);
-    jpeg_start_decompress(&cinfo);
-
-    // 获取图像信息
-    int width = cinfo.output_width;
-    int height = cinfo.output_height;
-    int channels = cinfo.output_components;
-
-    // 分配内存以存储图像数据
-    uint8_t *buffer = (uint8_t *)malloc(width * height * channels);
-    if (!buffer) {
-        perror("Memory allocation failed");
-        jpeg_destroy_decompress(&cinfo);
-        fclose(file);
-        return -1;
-    }
-
-    // 读取图像数据
-    uint8_t *row_ptr[1];
-    while (cinfo.output_scanline < height) {
-        row_ptr[0] = buffer + (cinfo.output_scanline) * width * channels;
-        jpeg_read_scanlines(&cinfo, row_ptr, 1);
-    }
-
-    // 将图像绘制到 framebuffer
-    for (int i = 0; i < height; i++) {
-        for (int j = 0; j < width; j++) {
-            int pixel_index = (i * width + j) * channels;
-            uint32_t color = (buffer[pixel_index] << 16) | (buffer[pixel_index + 1] << 8) | buffer[pixel_index + 2];
-            framebuffer_set_pixel(x + j, y + i, color);
-        }
-    }
-
-    // 释放资源
-    free(buffer);
-    jpeg_finish_decompress(&cinfo);
-    jpeg_destroy_decompress(&cinfo);
-    fclose(file);
-    return 0;
+    // 释放 framebuffer 资源
+    framebuffer_deinit();
 }
 
-/**
- * @brief 绘制文本到屏幕（简单实现，只绘制一个字符）。
- *
- * @param text 要绘制的文本。
- * @param x 文本的 X 坐标。
- * @param y 文本的 Y 坐标。
- * @param color 文本颜色。
- * @return 成功返回 0，失败返回 -1。
- */
-int display_draw_text(const char *text, int x, int y, uint32_t color) {
-    if (!fb_initialized) {
-        return -1; // framebuffer 未初始化
+void Display::push_frame(const cv::Mat& frame) {
+    if (frame.rows != this->height || 
+        frame.cols != this->width ||
+        frame.type() != CV_8UC3) {
+        return;
     }
     
-    // 这里只是绘制文本的第一个字符作为示例
-    if (text && strlen(text) > 0) {
-        framebuffer_set_pixel(x, y, color); // 仅示例，实际需要绘制每个字符
-    }
-    return 0;
-}
-
-/**
- * @brief 绘制矩形到屏幕。
- *
- * @param x 矩形的 X 坐标。
- * @param y 矩形的 Y 坐标。
- * @param width 矩形的宽度。
- * @param height 矩形的高度。
- * @param color 矩形颜色。
- * @return 成功返回 0，失败返回 -1。
- */
-int display_draw_rectangle(int x, int y, int width, int height, uint32_t color) {
-    if (!fb_initialized) {
-        return -1; // framebuffer 未初始化
-    }
-    
-    for (int i = 0; i < height; i++) {
-        for (int j = 0; j < width; j++) {
-            framebuffer_set_pixel(x + j, y + i, color);
+    {
+        std::lock_guard<std::mutex> lock(mtx_display);
+        if (frame_queue.size() < 10) { // 限制队列长度，避免内存占用过多
+            frame_queue.push(frame);
         }
     }
-    return 0;
+    cond_var_display.notify_one(); // 唤醒显示线程
 }
 
-/**
- * @brief 刷新屏幕，确保所有绘图操作生效。
- *
- * @return 成功返回 0，失败返回 -1。
- */
-int display_refresh(void) {
-    // 在这个简单的实现中，不需要特别的刷新逻辑。
-    return 0; // 成功
+void Display::start_display() {
+    resume_display();
+}
+
+void Display::pause_display() {
+    std::lock_guard<std::mutex> lock(mtx_display);
+    flag_pause = true;
+}
+
+void Display::resume_display() {
+    {
+        std::lock_guard<std::mutex> lock(mtx_display);
+        flag_pause = false;
+    }
+    cond_var_display.notify_one(); // 唤醒显示线程继续工作
+}
+
+void Display::display_on_fb() {
+    while (true) {
+        std::unique_lock<std::mutex> ulock(mtx_display);
+
+        // 等待队列有数据或退出信号
+        cond_var_display.wait(ulock, [this] {
+            return !frame_queue.empty() || flag_quit;
+        });
+
+        // 如果设置了退出标志，退出线程
+        if (flag_quit) {
+            break;
+        }
+
+        // 暂停时等待唤醒
+        if (flag_pause) {
+            cond_var_display.wait(ulock, [this] { 
+                return !flag_pause || flag_quit; 
+            });
+        }
+
+        // 取出一帧
+        cv::Mat frame = frame_queue.front();
+        frame_queue.pop();
+
+        ulock.unlock(); // 解锁以允许其他线程推送帧
+
+        // 处理帧：旋转、调整大小、转换格式，并显示在 framebuffer 上
+        cv::Mat rotated_frame, resized_frame, rgb565;
+        cv::rotate(frame, rotated_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
+        cv::resize(rotated_frame, resized_frame, cv::Size(width, height));
+        cv::cvtColor(resized_frame, rgb565, cv::COLOR_RGB2BGR565);
+
+        framebuffer_set_frame_rgb565((uint16_t*)rgb565.data, width, height);
+    }
 }

@@ -19,8 +19,9 @@ enum Led_num {
  * This function initializes the given LED by configuring the associated GPIO pin.
  *
  * @param led The LED to initialize (LED0 or LED1).
+ * @return 0 on success, -1 on failure.
  */
-void led_init(enum Led_num led);
+int led_init(enum Led_num led);
 
 /**
  * @brief Deinitialize the specified LED.

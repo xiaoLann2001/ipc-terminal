@@ -2,15 +2,19 @@
 #include <unistd.h>  // for usleep()
 
 // Initialize LED (exports the GPIO pins)
-void led_init(enum Led_num led) {
+int led_init(enum Led_num led) {
     // Initialize both LEDs as GPIO outputs
     if (gpio_init(led, GPIO_OUTPUT) == -1) {
         fprintf(stderr, "Failed to initialize LED: %d\n", led);
+        return -1;
     }
+    printf("LED %d initialized\n", led);
+    return 0;
 }
 
 // Deinitialize LED (unexport the GPIO pins)
 void led_deinit(enum Led_num led) {
+    led_off(led);
     gpio_deinit(led);
 }
 
