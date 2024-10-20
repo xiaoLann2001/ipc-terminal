@@ -1,5 +1,4 @@
-#ifndef DISPLAY_H
-#define DISPLAY_H
+#pragma once
 
 #include <queue>
 #include <mutex>
@@ -42,9 +41,9 @@ private:
 
     // 线程管理
     std::thread display_thread;
-    bool flag_stop = false;
-    bool flag_pause = false;
-    bool flag_quit = false;
+    bool flag_stop;
+    bool flag_pause;
+    bool flag_quit;
 
     // 线程安全的队列和同步机制
     std::queue<cv::Mat> frame_queue;
@@ -57,4 +56,3 @@ private:
     int bit_depth = 0;
 };
 
-#endif // DISPLAY_H

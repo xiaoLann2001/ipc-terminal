@@ -1,6 +1,5 @@
 // Signal.h
-#ifndef __SIGNAL_H__
-#define __SIGNAL_H__
+#pragma once
 
 #include <functional>
 #include <vector>
@@ -60,5 +59,3 @@ private:
     std::vector<std::shared_ptr<Slot>> slots;
     std::mutex mutex_;  // 用于线程安全
 };
-
-#endif // SIGNAL_H

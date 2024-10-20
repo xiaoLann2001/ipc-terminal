@@ -9,7 +9,9 @@ Display::Display() {
     framebuffer_init(FB_DEVICE);
     framebuffer_get_resolution(&(this->width), &(this->height), &(this->bit_depth));
 
+    flag_stop = false;
     flag_pause = false;
+    flag_quit = false;
 
     // 启动显示线程
     display_thread = std::thread(&Display::display_on_fb, this);
@@ -34,11 +36,17 @@ Display::~Display() {
 }
 
 void Display::push_frame(const cv::Mat& frame) {
-    if (frame.rows != this->height || 
-        frame.cols != this->width ||
-        frame.type() != CV_8UC3) {
+    if (frame.type() != CV_8UC3) {
+        perror("Frame type mismatch");
         return;
     }
+    
+    if (frame.rows != this->height || 
+        frame.cols != this->width) {
+        cv::resize(frame, frame, cv::Size(width, height));
+    }
+
+    cv::cvtColor(frame, frame, cv::COLOR_RGB2BGR565);
     
     {
         std::lock_guard<std::mutex> lock(mtx_display);
@@ -93,12 +101,6 @@ void Display::display_on_fb() {
 
         ulock.unlock(); // 解锁以允许其他线程推送帧
 
-        // 处理帧：旋转、调整大小、转换格式，并显示在 framebuffer 上
-        cv::Mat rotated_frame, resized_frame, rgb565;
-        cv::rotate(frame, rotated_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
-        cv::resize(rotated_frame, resized_frame, cv::Size(width, height));
-        cv::cvtColor(resized_frame, rgb565, cv::COLOR_RGB2BGR565);
-
-        framebuffer_set_frame_rgb565((uint16_t*)rgb565.data, width, height);
+        framebuffer_set_frame_rgb565((uint16_t*)frame.data, width, height);
     }
 }

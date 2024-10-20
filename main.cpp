@@ -14,16 +14,16 @@ int main() {
     signal(SIGINT, sigterm_handler);
     signal(SIGTERM, sigterm_handler);
 
-    Network *network = new Network("192.168.5.42", 8888);
+    // Network *network = new Network("192.168.5.42", 8888);
     Control *control = new Control();
-    network->signal_network_received.connect(control, &Control::onNetworkReceived);
+    // network->signal_network_received.connect(control, &Control::onNetworkReceived);
 
     while (!quit) {
         // network->send_data("Hello, server");
         sleep(1);
     }
 
-    delete network;
+    // delete network;
     delete control;
 
     return 0;

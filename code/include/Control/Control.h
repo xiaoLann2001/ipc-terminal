@@ -1,5 +1,4 @@
-#ifndef __CONTROL_H__
-#define __CONTROL_H__
+#pragma once
 
 #include <iostream>
 #include <string>
@@ -56,6 +55,9 @@ public:
     Control();
     ~Control();
 
+    Display *display;
+    Video *video;
+
     Signal<ControlSignal> signal_control_received;
 
     // 接收网络数据槽函数
@@ -80,4 +82,3 @@ private:
     void handleDisplayControl(int opcode, int param);
 };
 
-#endif // __CONTROL_H__

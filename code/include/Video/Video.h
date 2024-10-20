@@ -1,53 +1,60 @@
-#ifndef __VIDEO_H_
-#define __VIDEO_H_
+#pragma once
 
-#include <assert.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <getopt.h>
-#include <pthread.h>
-#include <signal.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/poll.h>
-#include <time.h>
-#include <unistd.h>
-// #include <vector>
-
-#include "luckfox_mpi.h"
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 #include "rtsp_demo.h"
+#include "luckfox_mpi.h"
 
-// 初始化视频捕捉系统
-int video_capture_init(int width, int height);
+#include "Signal/Signal.h"
+#include <thread>
 
-// 获取帧数据
-void *video_capture_get_frame(VIDEO_FRAME_INFO_S *stVpssFrame);
+class Video {
+public:
+    Video(int width, int height);
+    ~Video();
 
-// 释放帧
-RK_S32 video_capture_release_frame(VIDEO_FRAME_INFO_S *stVpssFrame);
+    Signal<cv::Mat> signal_video_frame;
 
-// 清理系统资源
-void video_capture_cleanup();
+private:
+    int videoinit();
 
-// 视频编码器初始化
-void video_encode_init(int width, int height, RK_CODEC_ID_E enCodecType);
+    cv::Mat getFrame();
 
-// 对vpss帧进行编码
-RK_S32 video_encode(VIDEO_FRAME_INFO_S *stVpssFrame, VENC_STREAM_S *stFrame);
+    void encodeFrame();
 
-RK_S32 video_encode_release_frame(VENC_STREAM_S *stFrame);
+    void sendRtspFrame();
 
-void video_encode_cleanup();
+    void releaseChnFrame();
 
-// RTSP初始化
-void video_rtsp_init(int port);
+    void releaseVencFrame();
 
-// 发送视频流到RTSP
-void video_rtsp_send(VENC_STREAM_S *stFrame);
+    void cleanup();
 
-void video_rtsp_cleanup();
+    void video_process();
 
+    bool flag_quit;
+    std::mutex mtx_video;
+    std::thread *video_thread;
 
-#endif // __VIDEO_CAPTURE_H_
+    int width;
+    int height;
+    int rtsp_port;
+    rtsp_demo_handle g_rtsplive;
+    rtsp_session_handle g_rtsp_session;
+    MPP_CHN_S stSrcChn, stvpssChn;
+
+    MB_POOL src_Pool;
+    MB_BLK src_Blk;
+
+    char fps_text[16];
+	float fps;
+
+    VENC_STREAM_S stFrame;	
+	RK_U64 H264_PTS;
+	RK_U32 H264_TimeRef; 
+	VIDEO_FRAME_INFO_S stViFrame;
+    VIDEO_FRAME_INFO_S h264_frame;
+    unsigned char *data;
+    cv::Mat frame;
+};

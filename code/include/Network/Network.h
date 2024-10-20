@@ -1,5 +1,4 @@
-#ifndef NETWORK_H
-#define NETWORK_H
+#pragma once
 
 #include <string>
 #include <thread>
@@ -49,5 +48,3 @@ private:
     // 初始化网络连接
     bool connect_to_server();
 };
-
-#endif // NETWORK_H
