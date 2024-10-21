@@ -27,8 +27,11 @@ public:
     Signal<std::string> signal_network_received;
 
 private:
-    void receive_thread_func();  // 接收数据线程
-    void send_thread_func();     // 发送数据线程
+    void run(); // 类运行线程
+    void receive_thread_func(); // 接收数据线程
+    void send_thread_func();    // 发送数据线程
+
+    void connect_to_server(); // 连接到服务器
 
     bool flag_quit = false;
     
@@ -37,14 +40,16 @@ private:
     int sockfd;
     bool is_connected;
 
+    std::thread run_thread;
     std::thread receive_thread;
     std::thread send_thread;
+
+    // 连接线程及其同步机制
+    std::mutex mtx_connect;
+    std::condition_variable cond_var_connect;
 
     // 发送队列及其同步机制
     std::queue<std::string> send_queue;
     std::mutex mtx_send;
     std::condition_variable cond_var_send;
-
-    // 初始化网络连接
-    bool connect_to_server();
 };

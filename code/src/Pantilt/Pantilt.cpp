@@ -32,12 +32,12 @@ Pantilt::~Pantilt() {
 }
 
 void Pantilt::up() {
-    setTilt(tilt_angle - 5);
+    setTilt(tilt_angle - 15);
     printf("tilt_angle: %d\n", tilt_angle);
 }
 
 void Pantilt::down() {
-    setTilt(tilt_angle + 5);
+    setTilt(tilt_angle + 15);
     printf("tilt_angle: %d\n", tilt_angle);
 }
 
