@@ -19,8 +19,10 @@ Video::~Video() {
 }
 
 int Video::videoinit() {
+#if FPS_SHOW
     fps = 0;
 	memset(fps_text,0,16);
+#endif
 
     H264_PTS = 0;
     H264_TimeRef = 0;
@@ -43,8 +45,10 @@ int Video::videoinit() {
 	h264_frame.stVFrame.enPixelFormat =  RK_FMT_RGB888; 
 	h264_frame.stVFrame.u32FrameFlag = 160;
 	h264_frame.stVFrame.pMbBlk = src_Blk;
-	data = (unsigned char *)RK_MPI_MB_Handle2VirAddr(src_Blk);
-	frame = cv::Mat(cv::Size(width,height),CV_8UC3,data);
+	venc_data = (unsigned char *)RK_MPI_MB_Handle2VirAddr(src_Blk);
+	frame = cv::Mat(cv::Size(width, height), CV_8UC3, venc_data);
+    yuv420sp = cv::Mat(height + height / 2, width, CV_8UC1);
+    bgr = cv::Mat(height, width, CV_8UC3);	
 
     // RKAIQ 初始化
     RK_BOOL multi_sensor = RK_FALSE;
@@ -60,8 +64,8 @@ int Video::videoinit() {
     }
 
     // rtsp init	
-	g_rtsplive = create_rtsp_demo(554);
-	g_rtsp_session = rtsp_new_session(g_rtsplive, "/live/0");
+	g_rtsplive = create_rtsp_demo(RTSP_PORT);
+	g_rtsp_session = rtsp_new_session(g_rtsplive, RTSP_PATH);
 	rtsp_set_video(g_rtsp_session, RTSP_CODEC_ID_VIDEO_H264, NULL, 0);
 	rtsp_sync_video_ts(g_rtsp_session, rtsp_get_reltime(), rtsp_get_ntptime());
 
@@ -78,20 +82,23 @@ int Video::videoinit() {
 
 cv::Mat Video::getFrame() {
     if (RK_MPI_VI_GetChnFrame(0, 0, &stViFrame, -1) == RK_SUCCESS) {
-        void *vi_data = RK_MPI_MB_Handle2VirAddr(stViFrame.stVFrame.pMbBlk);
+        vi_data = RK_MPI_MB_Handle2VirAddr(stViFrame.stVFrame.pMbBlk);
+        yuv420sp.data = (unsigned char*)vi_data;
+        bgr.data = venc_data;	
 
-        cv::Mat yuv420sp(height + height / 2, width, CV_8UC1, vi_data);
-        cv::Mat bgr(height, width, CV_8UC3, data);			
         cv::cvtColor(yuv420sp, bgr, cv::COLOR_YUV420sp2BGR);
-        cv::resize(bgr, frame, cv::Size(width ,height), 0, 0, cv::INTER_LINEAR);
+        // cv::resize(bgr, frame, cv::Size(width ,height), 0, 0, cv::INTER_LINEAR);
+        cv::resize(bgr, frame, cv::Size(width ,height), 0, 0, cv::INTER_NEAREST);
         
+#if FPS_SHOW
         sprintf(fps_text,"fps = %.2f",fps);		
         cv::putText(frame,fps_text,
                         cv::Point(100, 100),
                         cv::FONT_HERSHEY_SIMPLEX,3,
                         cv::Scalar(0,255,0),4);
+#endif
 
-        memcpy(data, frame.data, width * height * 3);  
+        memcpy(venc_data, frame.data, width * height * 3);  
     }
     return frame;
 }
@@ -110,8 +117,10 @@ void Video::sendRtspFrame() {
             rtsp_tx_video(g_rtsp_session, (uint8_t *)pData, stFrame.pstPack->u32Len, stFrame.pstPack->u64PTS);
             rtsp_do_event(g_rtsplive);
         }
+#if FPS_SHOW
         RK_U64 nowUs = TEST_COMM_GetNowUs();
 		fps = (float) 1000000 / (float)(nowUs - h264_frame.stVFrame.u64PTS);
+#endif
     }
 }
 
@@ -130,25 +139,24 @@ void Video::releaseVencFrame() {
 }
 
 void Video::cleanup() {
+    RK_MPI_MB_ReleaseMB(src_Blk);
+    RK_MPI_MB_DestroyPool(src_Pool);
+    
+    RK_MPI_VI_DisableChn(0, 0);
+    RK_MPI_VI_DisableDev(0);
+
+    SAMPLE_COMM_ISP_Stop(0);
+
+    RK_MPI_VENC_StopRecvFrame(0);
+	RK_MPI_VENC_DestroyChn(0);
+
+	free(stFrame.pstPack);
+
     if (g_rtsplive) {
         rtsp_del_demo(g_rtsplive);
     }
 
-    RK_MPI_SYS_UnBind(&stSrcChn, &stvpssChn);
-    RK_MPI_VI_DisableChn(0, 0);
-    RK_MPI_VI_DisableDev(0);
-    RK_MPI_VPSS_StopGrp(0);
-    RK_MPI_VPSS_DestroyGrp(0);
-    SAMPLE_COMM_ISP_Stop(0);
     RK_MPI_SYS_Exit();
-
-    if (src_Blk) {
-        RK_MPI_MB_ReleaseMB(src_Blk);
-    }
-
-    if (src_Pool) {
-        RK_MPI_MB_DestroyPool(src_Pool);
-    }
 }
 
 void Video::video_process() {

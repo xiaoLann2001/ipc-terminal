@@ -26,9 +26,6 @@ public:
     // 接收帧并将其放入队列
     void push_frame(const cv::Mat& frame);
 
-    // 启动显示线程
-    void start_display();
-
     // 暂停显示
     void pause_display();
 
@@ -41,7 +38,6 @@ private:
 
     // 线程管理
     std::thread display_thread;
-    bool flag_stop;
     bool flag_pause;
     bool flag_quit;
 

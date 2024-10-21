@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-#include "gpio/gpio.h"
+#include "led/gpio.h"
 
 // LED Resources
 enum Led_num {

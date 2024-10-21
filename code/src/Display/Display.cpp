@@ -9,7 +9,6 @@ Display::Display() {
     framebuffer_init(FB_DEVICE);
     framebuffer_get_resolution(&(this->width), &(this->height), &(this->bit_depth));
 
-    flag_stop = false;
     flag_pause = false;
     flag_quit = false;
 
@@ -36,18 +35,10 @@ Display::~Display() {
 }
 
 void Display::push_frame(const cv::Mat& frame) {
-    if (frame.type() != CV_8UC3) {
-        perror("Frame type mismatch");
+    if (flag_pause || flag_quit) {
         return;
     }
-    
-    if (frame.rows != this->height || 
-        frame.cols != this->width) {
-        cv::resize(frame, frame, cv::Size(width, height));
-    }
 
-    cv::cvtColor(frame, frame, cv::COLOR_RGB2BGR565);
-    
     {
         std::lock_guard<std::mutex> lock(mtx_display);
         if (frame_queue.size() < 10) { // 限制队列长度，避免内存占用过多
@@ -55,10 +46,6 @@ void Display::push_frame(const cv::Mat& frame) {
         }
     }
     cond_var_display.notify_one(); // 唤醒显示线程
-}
-
-void Display::start_display() {
-    resume_display();
 }
 
 void Display::pause_display() {
@@ -70,6 +57,9 @@ void Display::resume_display() {
     {
         std::lock_guard<std::mutex> lock(mtx_display);
         flag_pause = false;
+        while (!frame_queue.empty()) {
+            frame_queue.pop(); // 清空队列
+        }
     }
     cond_var_display.notify_one(); // 唤醒显示线程继续工作
 }
@@ -100,6 +90,18 @@ void Display::display_on_fb() {
         frame_queue.pop();
 
         ulock.unlock(); // 解锁以允许其他线程推送帧
+
+        if (frame.type() != CV_8UC3) {
+            perror("Frame type mismatch");
+            return;
+        }
+        
+        if (frame.rows != this->height || 
+            frame.cols != this->width) {
+            cv::resize(frame, frame, cv::Size(width, height));
+        }
+
+        cv::cvtColor(frame, frame, cv::COLOR_RGB2BGR565);
 
         framebuffer_set_frame_rgb565((uint16_t*)frame.data, width, height);
     }

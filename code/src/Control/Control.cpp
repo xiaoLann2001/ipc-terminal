@@ -5,16 +5,27 @@
  */
 Control::Control() {
     init();
+
+    // LED 模块初始化
+    printf("LED module initialized\n");
     led_init(LED0);
     led_init(LED1);
 
+    // Pantilt 模块初始化
+    printf("Pantilt module initialized\n");
+    pantilt = new Pantilt();
+
     // 显示类初始化
+    printf("Display module initialized\n");
     display = new Display();
 
     // 视频类初始化
-    video = new Video(1920, 1080);
+    printf("Video module initialized\n");
+    video = new Video(720, 480);
 
     video->signal_video_frame.connect(display, &Display::push_frame);
+
+    printf("Control module initialized\n");
 }
 
 Control::~Control() {
@@ -23,6 +34,7 @@ Control::~Control() {
 
     delete display;
     delete video;
+    delete pantilt;
 }
 
 /**
@@ -42,12 +54,12 @@ void Control::init() {
         std::bind(&Control::handlePantiltControl, this, OP_PANTILT_UP, std::placeholders::_1),
         std::bind(&Control::handlePantiltControl, this, OP_PANTILT_DOWN, std::placeholders::_1),
         std::bind(&Control::handlePantiltControl, this, OP_PANTILT_LEFT, std::placeholders::_1),
-        std::bind(&Control::handlePantiltControl, this, OP_PANTILT_RIGHT, std::placeholders::_1)
+        std::bind(&Control::handlePantiltControl, this, OP_PANTILT_RIGHT, std::placeholders::_1),
+        std::bind(&Control::handlePantiltControl, this, OP_PANTILT_RESET, std::placeholders::_1)
     };
 
     // 初始化 DISPLAY 模块控制函数
     display_control_functions = {
-        std::bind(&Control::handleDisplayControl, this, OP_DISPLAY_START, std::placeholders::_1),
         std::bind(&Control::handleDisplayControl, this, OP_DISPLAY_PAUSE, std::placeholders::_1),
         std::bind(&Control::handleDisplayControl, this, OP_DISPLAY_RESUME, std::placeholders::_1)
     };
@@ -66,40 +78,37 @@ ControlSignal Control::parseSignal(const std::string& data) {
 
     // 判断解析的操作码是否合法
     switch (signal.module_id) {
+        case ID_UNKNOWN:
+            std::cerr << "Unknown module ID: " << signal.module_id << std::endl;
+            break;
         case ID_LED:
-            if (signal.opcode != OP_LED_ON && 
-                signal.opcode != OP_LED_OFF &&
-                signal.opcode != OP_LED_TOGGLE &&
-                signal.opcode != OP_LED_BLINK
-                ) {
+            if (signal.opcode < 0 || signal.opcode >= OP_LED_MAX) {
                 std::cerr << "Unknown LED opcode: " << signal.opcode << std::endl;
-            } else if (signal.param != PA_LED0 && 
-                       signal.param != PA_LED1) {
-                std::cerr << "Unknown LED param: " << signal.param << std::endl;
-            }
+                signal.module_id = ID_UNKNOWN;
+                if (signal.param < 0 || signal.param >= LEDParam::PA_LED_MAX) {
+                    std::cerr << "Unknown LED param: " << signal.param << std::endl;
+                    signal.module_id = ID_UNKNOWN;
+                }  
+            } 
             break;
         case ID_PANTILT:
-            if (signal.opcode != OP_PANTILT_UP && 
-                signal.opcode != OP_PANTILT_DOWN &&
-                signal.opcode != OP_PANTILT_LEFT && 
-                signal.opcode != OP_PANTILT_RIGHT
-                ) {
+            if (signal.opcode < 0 || signal.opcode >= OP_PANTILT_MAX) {
                 std::cerr << "Unknown pantilt opcode: " << signal.opcode << std::endl;
+                signal.module_id = ID_UNKNOWN;
             }
             break;
         case ID_VIDEO:
             // 暂时不处理视频模块的操作
             break;
         case ID_DISPLAY:
-            if (signal.opcode != OP_DISPLAY_START && 
-                signal.opcode != OP_DISPLAY_PAUSE &&
-                signal.opcode != OP_DISPLAY_RESUME
-                ) {
+            if (signal.opcode < 0 || signal.opcode >= OP_DISPLAY_MAX) {
                 std::cerr << "Unknown display opcode: " << signal.opcode << std::endl;
+                signal.module_id = ID_UNKNOWN;
             }
             break;
         default:
             std::cerr << "Unknown module ID: " << signal.module_id << std::endl;
+            signal.module_id = ID_UNKNOWN;
     }
     return signal;
 }
@@ -111,15 +120,17 @@ ControlSignal Control::parseSignal(const std::string& data) {
 void Control::dispatchSignal(const ControlSignal& signal) {
     switch (signal.module_id) {
         case ID_LED:
-            if (signal.opcode >= 0 && signal.opcode < led_control_functions.size()) {
-                led_control_functions[signal.opcode](signal.param);
+            if (signal.opcode >= 0 && signal.opcode < OP_LED_MAX) {
+                if (signal.param >= 0 && signal.param < LEDParam::PA_LED_MAX) {
+                    led_control_functions[signal.opcode](signal.param);
+                }
             } else {
                 std::cerr << "Invalid LED opcode: " << signal.opcode << std::endl;
             }
             break;
         
         case ID_PANTILT:
-            if (signal.opcode >= 0 && signal.opcode < pantilt_control_functions.size()) {
+            if (signal.opcode >= 0 && signal.opcode < OP_PANTILT_MAX) {
                 pantilt_control_functions[signal.opcode](signal.param);
             } else {
                 std::cerr << "Invalid Pantilt opcode: " << signal.opcode << std::endl;
@@ -127,7 +138,7 @@ void Control::dispatchSignal(const ControlSignal& signal) {
             break;
 
         case ID_DISPLAY:
-            if (signal.opcode >= 0 && signal.opcode < display_control_functions.size()) {
+            if (signal.opcode >= 0 && signal.opcode < OP_DISPLAY_MAX) {
                 display_control_functions[signal.opcode](signal.param);
             } else {
                 std::cerr << "Invalid Display opcode: " << signal.opcode << std::endl;
@@ -146,6 +157,7 @@ void Control::onNetworkReceived(const std::string& data) {
     std::cout << "Parsed signal: module_id=" << signal.module_id
             << ", opcode=" << signal.opcode
             << ", param=" << signal.param << std::endl;
+    if (signal.module_id == ID_UNKNOWN) return;
     dispatchSignal(signal);
 }
 
@@ -178,16 +190,24 @@ void Control::handleLEDControl(int opcode, int param) {
 void Control::handlePantiltControl(int opcode, int param) {
     switch (opcode) {
         case OP_PANTILT_UP:
+            pantilt->up();
             std::cout << "Pantilt moved UP" << std::endl;
             break;
         case OP_PANTILT_DOWN:
+            pantilt->down();
             std::cout << "Pantilt moved DOWN" << std::endl;
             break;
         case OP_PANTILT_LEFT:
+            pantilt->left();
             std::cout << "Pantilt moved LEFT" << std::endl;
             break;
         case OP_PANTILT_RIGHT:
+            pantilt->right();
             std::cout << "Pantilt moved RIGHT" << std::endl;
+            break;
+        case OP_PANTILT_RESET:
+            pantilt->reset();
+            std::cout << "Pantilt moved RESET" << std::endl;
             break;
         default:
             std::cerr << "Unknown Pantilt opcode: " << opcode << std::endl;
@@ -197,13 +217,12 @@ void Control::handlePantiltControl(int opcode, int param) {
 // 处理 Display 控制
 void Control::handleDisplayControl(int opcode, int param) {
     switch (opcode) {
-        case OP_DISPLAY_START:
-            std::cout << "Display started" << std::endl;
-            break;
         case OP_DISPLAY_PAUSE:
+            display->pause_display();
             std::cout << "Display paused" << std::endl;
             break;
         case OP_DISPLAY_RESUME:
+            display->resume_display();
             std::cout << "Display resumed" << std::endl;
             break;
         default:

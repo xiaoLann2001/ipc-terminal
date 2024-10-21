@@ -32,8 +32,11 @@ file(GLOB SRC_FILES "main.cpp"
                     ${SRC_DIR}/Network/Network.cpp
                     ${SRC_DIR}/Control/Control.cpp
 
-                    ${SRC_DIR}/gpio/gpio.c
                     ${SRC_DIR}/led/led.c
+                    ${SRC_DIR}/led/gpio.c
+
+                    ${SRC_DIR}/Pantilt/Pantilt.cpp
+                    ${SRC_DIR}/Pantilt/pwm.c
 
                     ${SRC_DIR}/Display/Display.cpp
                     ${SRC_DIR}/Display/framebuffer.c

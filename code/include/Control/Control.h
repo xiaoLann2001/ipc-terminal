@@ -19,7 +19,8 @@ struct ControlSignal {
 };
 
 enum ModuleID {
-    ID_LED = 1,
+    ID_UNKNOWN = 0,
+    ID_LED,
     ID_PANTILT,
     ID_VIDEO,
     ID_DISPLAY
@@ -29,25 +30,29 @@ enum LEDOpcode {
     OP_LED_ON = 0,
     OP_LED_OFF,
     OP_LED_TOGGLE,
-    OP_LED_BLINK
+    OP_LED_BLINK,
+    OP_LED_MAX
 };
 
 enum LEDParam {
     PA_LED0 = 0,
-    PA_LED1
+    PA_LED1,
+    PA_LED_MAX
 };
 
 enum PantiltOpcode {
     OP_PANTILT_UP = 0,
     OP_PANTILT_DOWN,
     OP_PANTILT_LEFT,
-    OP_PANTILT_RIGHT
+    OP_PANTILT_RIGHT,
+    OP_PANTILT_RESET,
+    OP_PANTILT_MAX
 };
 
 enum DisplayOpcode {
-    OP_DISPLAY_START = 0,
-    OP_DISPLAY_PAUSE,
+    OP_DISPLAY_PAUSE = 0,
     OP_DISPLAY_RESUME,
+    OP_DISPLAY_MAX
 };
 
 class Control {
@@ -57,6 +62,7 @@ public:
 
     Display *display;
     Video *video;
+    Pantilt *pantilt;
 
     Signal<ControlSignal> signal_control_received;
 

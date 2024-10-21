@@ -1,4 +1,4 @@
-#include "gpio/gpio.h"
+#include "led/gpio.h"
 
 #define GPIO_PATH "/sys/class/gpio/"
 
