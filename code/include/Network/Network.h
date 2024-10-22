@@ -34,11 +34,11 @@ private:
     void connect_to_server(); // 连接到服务器
 
     bool flag_quit = false;
+    bool is_connected;
     
     std::string server_ip;
     int server_port;
     int sockfd;
-    bool is_connected;
 
     std::thread run_thread;
     std::thread receive_thread;
