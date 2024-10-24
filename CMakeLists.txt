@@ -42,7 +42,8 @@ file(GLOB SRC_FILES "main.cpp"
                     ${SRC_DIR}/Display/framebuffer.c
                     
                     ${SRC_DIR}/Video/Video.cpp
-                    ${SRC_DIR}/Video/luckfox_mpi.cpp
+                    ${SRC_DIR}/Video/luckfox_video.cpp
+                    ${SRC_DIR}/Video/luckfox_rtsp.c
 )
 add_executable(${PROJECT_NAME} ${SRC_FILES})
 

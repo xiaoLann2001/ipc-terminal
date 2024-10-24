@@ -78,6 +78,8 @@
         "led.h": "c",
         "opencv.hpp": "c",
         "signal.h": "c",
-        "cerrno": "cpp"
+        "cerrno": "cpp",
+        "rk_mpi_vi.h": "c",
+        "luckfox_rtsp.h": "c"
     }
 }

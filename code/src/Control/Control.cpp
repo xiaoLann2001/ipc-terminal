@@ -21,7 +21,7 @@ Control::Control() {
 
     // 视频类初始化
     printf("Video module initialized\n");
-    video = new Video(720, 480);
+    video = new Video();
 
     video->signal_video_frame.connect(display, &Display::push_frame);
 

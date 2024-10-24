@@ -58,7 +58,7 @@ void Network::run() {
             send_thread = std::thread(&Network::send_thread_func, this);
         } else {
             // 每秒检查一次连接状态
-            std::cout << "Checking connection..." << std::endl;
+            // std::cout << "Checking connection..." << std::endl;
             std::this_thread::sleep_for(std::chrono::seconds(1));
         }
     }
