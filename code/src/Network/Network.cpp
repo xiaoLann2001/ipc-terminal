@@ -1,6 +1,13 @@
 #include "Network/Network.h"
 
 // 构造函数：初始化网络并启动收发线程
+Network::Network() {
+    server_ip = rk_param_get_string("network:server_ip", "127.0.0.1");
+    server_port = rk_param_get_int("network:port", 8888);
+
+    run_thread = std::thread(&Network::run, this);
+}
+
 Network::Network(const std::string& server_ip, int server_port)
     : server_ip(server_ip), server_port(server_port), is_connected(false) {
 

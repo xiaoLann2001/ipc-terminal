@@ -18,7 +18,16 @@
 
 #include "rknn_api.h"
 
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 
+#define MODEL_WIDTH 640
+#define MODEL_HEIGHT 640
+
+#ifndef RV1106_1103
+#define RV1106_1103
+#endif
 
 #if defined(RV1106_1103) 
     typedef struct {
@@ -55,5 +64,9 @@ int init_yolov5_model(const char* model_path, rknn_app_context_t* app_ctx);
 int release_yolov5_model(rknn_app_context_t* app_ctx);
 
 int inference_yolov5_model(rknn_app_context_t* app_ctx,  object_detect_result_list* od_results);
+
+cv::Mat letterbox(cv::Mat input, int video_width, int video_height);
+
+void mapCoordinates(int *x, int *y);
 
 #endif //_RKNN_DEMO_YOLOV5_H_

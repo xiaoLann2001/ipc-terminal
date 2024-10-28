@@ -14,10 +14,12 @@
 #include <cerrno>
 #include <cstring>
 
+#include "param/param.h"
 #include "Signal/Signal.h"
 
 class Network {
 public:
+    Network();
     Network(const std::string& server_ip, int server_port);
     ~Network();
 

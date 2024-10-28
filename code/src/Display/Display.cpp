@@ -65,7 +65,7 @@ void Display::resume_display() {
 }
 
 void Display::display_on_fb() {
-    while (true) {
+    while (!flag_quit) {
         std::unique_lock<std::mutex> ulock(mtx_display);
 
         // 等待队列有数据或退出信号

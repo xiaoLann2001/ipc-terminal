@@ -32,7 +32,7 @@
 #define LOW_BIT_RATE_HEIGHT 480
 #define LOW_BIT_RATE_FPS 30
 
-#define FPS_SHOW 0
+#define FPS_SHOW 1
 
 int rkaiq_init();
 int rkaiq_deinit();
@@ -61,6 +61,5 @@ int bind_vi_to_venc(int pipeId, MPP_CHN_S *vi_chn, MPP_CHN_S *venc_chn);
 int unbind_vi_to_venc(int pipeId, MPP_CHN_S *vi_chn, MPP_CHN_S *venc_chn);
 
 int vpss_init(int VpssChn, int width, int height);
-
 
 #endif

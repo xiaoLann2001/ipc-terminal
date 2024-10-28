@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <thread>
+#include <chrono>
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -9,6 +10,11 @@
 
 #include "Video/luckfox_rtsp.h"
 #include "Video/luckfox_video.h"
+#include "Video/luckfox_rgn_draw.h"
+#include "Video/luckfox_osd.h"
+
+#include "yolov5.h"
+#include "postprocess.h"
 
 #include "Signal/Signal.h"
 

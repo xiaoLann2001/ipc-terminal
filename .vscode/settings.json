@@ -80,6 +80,17 @@
         "signal.h": "c",
         "cerrno": "cpp",
         "rk_mpi_vi.h": "c",
-        "luckfox_rtsp.h": "c"
+        "luckfox_rtsp.h": "c",
+        "set": "cpp",
+        "fcntl.h": "c",
+        "luckfox_osd.h": "c",
+        "common.h": "c",
+        "iniparser.h": "c",
+        "log.h": "c",
+        "time.h": "c",
+        "global.h": "c",
+        "param.h": "c",
+        "cinttypes": "cpp",
+        "osd.h": "c"
     }
 }
