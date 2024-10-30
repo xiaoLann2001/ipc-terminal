@@ -25,14 +25,14 @@ int rk_param_dump() {
 
 	for (int i = 0; i < section_num; i++) {
 		section_name = iniparser_getsecname(g_ini_d_, i);
-		LOG_DEBUG("section_name is %s\n", section_name);
+		// LOG_DEBUG("section_name is %s\n", section_name);
 		section_keys = iniparser_getsecnkeys(g_ini_d_, section_name);
-		LOG_DEBUG("section_keys is %d\n", section_keys);
+		// LOG_DEBUG("section_keys is %d\n", section_keys);
 		for (int j = 0; j < section_keys; j++) {
 			iniparser_getseckeys(g_ini_d_, section_name, keys);
 			LOG_DEBUG("%s = %s\n", keys[j], iniparser_getstring(g_ini_d_, keys[j], ""));
 		}
-		LOG_DEBUG("section: %d load success\n", i);
+		// LOG_DEBUG("section: %d load success\n", i);
 	}
 
 	return 0;

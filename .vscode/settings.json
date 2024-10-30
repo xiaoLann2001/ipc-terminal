@@ -94,6 +94,7 @@
         "osd.h": "c",
         "font_factory.h": "c",
         "osd_common.h": "c",
-        "pantilt.h": "c"
+        "pantilt.h": "c",
+        "unordered_set": "cpp"
     }
 }

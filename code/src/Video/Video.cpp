@@ -12,7 +12,11 @@ Video::Video()
 
     video_thread0 = new std::thread(&Video::video_pipe0, this);
     video_thread1 = new std::thread(&Video::video_pipe1, this);
-    video_thread2 = new std::thread(&Video::video_pipe2, this);
+    
+    int ai_enable = rk_param_get_int("ai:enable", 0);
+    if (ai_enable) {
+        video_thread2 = new std::thread(&Video::video_pipe2, this);
+    }
 }
 
 Video::~Video()
@@ -185,99 +189,128 @@ void Video::video_pipe2()
     // 70: 'toaster', 71: 'sink', 72: 'refrigerator', 73: 'book', 74: 'clock', 
     // 75: 'vase', 76: 'scissors', 77: 'teddy bear', 78: 'hair drier', 79: 'toothbrush'
 
-    // Rknn model
-    int sX, sY, eX, eY;
-    char text[16];
-    rknn_app_context_t rknn_app_ctx;
-    object_detect_result_list od_results;
-    const char *model_path = "./model/yolov5.rknn";
-    const char *label_path = "./model/coco_80_labels_list.txt";
-    memset(&rknn_app_ctx, 0, sizeof(rknn_app_context_t));
+    int ai_od_enable = rk_param_get_int("ai.od:enable", 0);
+    int line_pixel = rk_param_get_int("ai.od:line_pixel", 2);
 
-    init_yolov5_model(model_path, &rknn_app_ctx);
-    init_post_process(label_path);
-
-    // osd
-    int ret = 0;
-	int line_pixel = 2;
-	RGN_HANDLE RgnHandle = 0;
-	RGN_CANVAS_INFO_S stCanvasInfo;
-    int batch_num = 0;
-	memset(&stCanvasInfo, 0, sizeof(RGN_CANVAS_INFO_S));
-    // wait for venc to start
-    usleep(500 * 1000);
-    rgn_draw_nn_init(RgnHandle);
-
-    // video parameters
-    int pipeId = 0;
-    int viChannelId = 2;
-    int vencChannelId = 2;
-    int video_width = 640;
-    int video_height = 640;
-    int rgn_video_width = 2304;
-    int rgn_video_height = 1296;
-
-    VIDEO_FRAME_INFO_S stViFrame;
-    cv::Mat yuv420sp(video_height + video_height / 2, video_width, CV_8UC1);
-    cv::Mat bgr(video_height, video_width, CV_8UC3);
-
-    vi_chn_init(pipeId, viChannelId, video_width, video_height, RK_FMT_YUV420SP);
-
-    while (!flag_quit)
-    {
-        // usleep(100 * 1000);
-        // get vi frame
-        yuv420sp.data = (unsigned char *)vi_get_frame(pipeId, viChannelId, video_width, video_height, &stViFrame);
-        cv::cvtColor(yuv420sp, bgr, cv::COLOR_YUV420sp2BGR);
-        cv::resize(bgr, bgr, cv::Size(video_width, video_height), 0, 0, cv::INTER_LINEAR);
-
-        // letterbox
-        cv::Mat letterboxImage = letterbox(bgr, video_width, video_height);
-        memcpy(rknn_app_ctx.input_mems[0]->virt_addr, letterboxImage.data, MODEL_HEIGHT * MODEL_HEIGHT * 3);
-
-        inference_yolov5_model(&rknn_app_ctx, &od_results);
-
-        // draw osd
-        std::vector<RgnDrawParams> tasks(20);
-        // printf("od_results.count: %d\n", od_results.count);
-        for (int i = 0; i < od_results.count; i++)
-        {
-            if (od_results.count >= 1)
-            {
-                object_detect_result *det_result = &(od_results.results[i]);
-                
-                // if (det_result->cls_id > 8) continue;
-
-                sX = (int)(det_result->box.left);
-                sY = (int)(det_result->box.top);
-                eX = (int)(det_result->box.right);
-                eY = (int)(det_result->box.bottom);
-                mapCoordinates(&sX, &sY);
-                mapCoordinates(&eX, &eY);
-                sX = (int)((float)sX / (float)video_width * rgn_video_width);
-                sY = (int)((float)sY / (float)video_height * rgn_video_height);
-                eX = (int)((float)eX / (float)video_width * rgn_video_width);
-                eY = (int)((float)eY / (float)video_height * rgn_video_height);
-                // printf("%s @ (%d %d %d %d) %.3f\n", coco_cls_to_name(det_result->cls_id),
-                //        sX, sY, eX, eY, det_result->prop);
-
-                RgnDrawParams task;
-                task.RgnHandle = RgnHandle;
-                task.x = sX;
-                task.y = sY;
-                task.w = eX - sX;
-                task.h = eY - sY;
-                task.line_pixel = line_pixel;
-                tasks.push_back(task);
-            }
+    if (ai_od_enable) {
+        int people_detect = rk_param_get_int("ai.od:people_detect", 0);     // class 0
+        int vehicle_detect = rk_param_get_int("ai.od:vehicle_detect", 0);   // class 1,2,3,4,5,7,8
+        int pet_detect = rk_param_get_int("ai.od:pet_detect", 0);           // class 15,16
+        
+        int detect_classes[80] = {0};
+        if (people_detect) {
+            detect_classes[0] = 1;
         }
-        rgn_add_draw_tasks_batch(tasks);
+        if (vehicle_detect) {
+            detect_classes[1] = 1;
+            detect_classes[2] = 1;
+            detect_classes[3] = 1;
+            detect_classes[4] = 1;
+            detect_classes[5] = 1;
+            detect_classes[7] = 1;
+            detect_classes[8] = 1;
+        } 
+        if (pet_detect) {
+            detect_classes[15] = 1;
+            detect_classes[16] = 1;
+        }
 
-        vi_release_frame(pipeId, viChannelId, &stViFrame);
+        // Rknn model
+        int sX, sY, eX, eY;
+        char text[16];
+        rknn_app_context_t rknn_app_ctx;
+        object_detect_result_list od_results;
+        const char *model_path = "./model/yolov5.rknn";
+        const char *label_path = "./model/coco_80_labels_list.txt";
+        memset(&rknn_app_ctx, 0, sizeof(rknn_app_context_t));
+
+        init_yolov5_model(model_path, &rknn_app_ctx);
+        init_post_process(label_path);
+
+        RGN_HANDLE RgnHandle = 0;
+        RGN_CANVAS_INFO_S stCanvasInfo;
+        int batch_num = 0;
+
+        // ai osd
+        memset(&stCanvasInfo, 0, sizeof(RGN_CANVAS_INFO_S));
+        // wait for venc to start
+        usleep(500 * 1000);
+        rgn_draw_nn_init(RgnHandle);
+
+        // video parameters
+        int pipeId = 0;
+        int viChannelId = 2;
+        int vencChannelId = 2;
+        int video_width = 640;
+        int video_height = 640;
+        int rgn_video_width = 2304;
+        int rgn_video_height = 1296;
+
+        VIDEO_FRAME_INFO_S stViFrame;
+        cv::Mat yuv420sp(video_height + video_height / 2, video_width, CV_8UC1);
+        cv::Mat bgr(video_height, video_width, CV_8UC3);
+
+        vi_chn_init(pipeId, viChannelId, video_width, video_height, RK_FMT_YUV420SP);
+
+        while (!flag_quit)
+        {
+            // usleep(100 * 1000);
+            // get vi frame
+            yuv420sp.data = (unsigned char *)vi_get_frame(pipeId, viChannelId, video_width, video_height, &stViFrame);
+            cv::cvtColor(yuv420sp, bgr, cv::COLOR_YUV420sp2BGR);
+            cv::resize(bgr, bgr, cv::Size(video_width, video_height), 0, 0, cv::INTER_LINEAR);
+
+            // letterbox
+            cv::Mat letterboxImage = letterbox(bgr, video_width, video_height);
+            memcpy(rknn_app_ctx.input_mems[0]->virt_addr, letterboxImage.data, MODEL_HEIGHT * MODEL_HEIGHT * 3);
+
+            inference_yolov5_model(&rknn_app_ctx, &od_results);
+
+            // draw osd
+            std::vector<RgnDrawParams> tasks(20);
+            // printf("od_results.count: %d\n", od_results.count);
+            for (int i = 0; i < od_results.count; i++)
+            {
+                if (od_results.count >= 1)
+                {
+                    object_detect_result *det_result = &(od_results.results[i]);
+
+                    if (detect_classes[det_result->cls_id] == 0) continue;
+                    
+                    // if (det_result->cls_id > 8) continue;
+
+                    sX = (int)(det_result->box.left);
+                    sY = (int)(det_result->box.top);
+                    eX = (int)(det_result->box.right);
+                    eY = (int)(det_result->box.bottom);
+                    mapCoordinates(&sX, &sY);
+                    mapCoordinates(&eX, &eY);
+                    sX = (int)((float)sX / (float)video_width * rgn_video_width);
+                    sY = (int)((float)sY / (float)video_height * rgn_video_height);
+                    eX = (int)((float)eX / (float)video_width * rgn_video_width);
+                    eY = (int)((float)eY / (float)video_height * rgn_video_height);
+                    // printf("%s @ (%d %d %d %d) %.3f\n", coco_cls_to_name(det_result->cls_id),
+                    //        sX, sY, eX, eY, det_result->prop);
+
+                    RgnDrawParams task;
+                    task.RgnHandle = RgnHandle;
+                    task.x = sX;
+                    task.y = sY;
+                    task.w = eX - sX;
+                    task.h = eY - sY;
+                    task.line_pixel = line_pixel;
+                    tasks.push_back(task);
+
+                }
+            }
+            rgn_add_draw_tasks_batch(tasks);
+
+            vi_release_frame(pipeId, viChannelId, &stViFrame);
+        }
+
+        rgn_draw_nn_deinit();
+        vi_chn_deinit(pipeId, viChannelId);
+        release_yolov5_model(&rknn_app_ctx);
+        deinit_post_process();
     }
-
-    rgn_draw_nn_deinit();
-    vi_chn_deinit(pipeId, viChannelId);
-    release_yolov5_model(&rknn_app_ctx);
-    deinit_post_process();
 }
