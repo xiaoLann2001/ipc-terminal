@@ -16,6 +16,8 @@
 
 #include "global.h"
 
+#include "ntp.h"
+
 class Network {
 public:
     Network();
@@ -36,6 +38,8 @@ private:
 
     void send_thread_func();    // 发送数据线程
 
+    void ntp_thread_func();     // NTP 线程
+
     void connect_to_server(); // 连接到服务器
 
     bool flag_quit = false;
@@ -48,6 +52,7 @@ private:
     std::thread run_thread;
     std::thread receive_thread;
     std::thread send_thread;
+    std::thread ntp_thread;
 
     // 连接线程及其同步机制
     std::mutex mtx_connect;
@@ -57,4 +62,8 @@ private:
     std::queue<std::string> send_queue;
     std::mutex mtx_send;
     std::condition_variable cond_var_send;
+
+    // NTP 同步机制
+    std::mutex mtx_ntp;
+    std::condition_variable cond_var_ntp;
 };

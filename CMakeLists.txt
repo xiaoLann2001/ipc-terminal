@@ -31,6 +31,7 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ 3rdparty.out)
 set(SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/code/src")
 file(GLOB SRC_FILES "main.cpp" 
                     ${SRC_DIR}/Network/Network.cpp
+                    ${SRC_DIR}/Network/ntp.c
 
                     ${SRC_DIR}/Control/Control.cpp
 

@@ -1,4 +1,4 @@
-#include "Network/Network.h"
+#include "Network.h"
 
 /**
  * @brief Network 类构造函数。
@@ -62,6 +62,9 @@ void Network::run() {
     connect_to_server();
     receive_thread = std::thread(&Network::receive_thread_func, this);
     send_thread = std::thread(&Network::send_thread_func, this);
+    if (rk_param_get_int("network.ntp_enabled", 1)) {
+        ntp_thread = std::thread(&Network::ntp_thread_func, this);
+    }
 
     while (!flag_quit) {
         if (!is_connected) {  // 如果服务器关闭
@@ -195,5 +198,23 @@ void Network::send_thread_func() {
         if (bytes_sent == -1) {
             std::cerr << "Failed to send data" << std::endl;
         }
+    }
+}
+
+/**
+ * @brief NTP 线程函数。
+ */
+void Network::ntp_thread_func() {
+    int refresh_time_s = rk_param_get_int("network.ntp:refresh_time_s", 60);
+	const char *ntp_server = rk_param_get_string("network.ntp:ntp_server", "119.28.183.184");
+	LOG_INFO("refresh_time_s is %d, ntp_server is %s\n", refresh_time_s, ntp_server);
+    rkipc_ntp_update(ntp_server);
+
+    while (!flag_quit) {
+        // 每隔 60 秒发送一次 NTP 请求
+        std::unique_lock<std::mutex> lock(mtx_ntp);
+        cond_var_ntp.wait_for(lock, std::chrono::seconds(refresh_time_s), [this] { return flag_quit; });
+
+        rkipc_ntp_update(ntp_server);
     }
 }
