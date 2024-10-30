@@ -1,13 +1,25 @@
-#include "led/gpio.h"
+#include "gpio.h"
 
 #define GPIO_PATH "/sys/class/gpio/"
 
-// Utility function to generate GPIO file path
+/**
+ * @brief 生成 GPIO 路径。
+ * 
+ * @param path 保存生成的路径。
+ * @param gpio_num GPIO 编号。
+ * @param filename 文件名。
+ * @return void
+ */
 void gpio_generate_path(char *path, int gpio_num, const char *filename) {
     sprintf(path, GPIO_PATH "gpio%d/%s", gpio_num, filename);
 }
 
-// Check if GPIO is already exported
+/**
+ * @brief 检查 GPIO 是否已经导出。
+ * 
+ * @param gpio_num GPIO 编号。
+ * @return 已导出返回 0，未导出返回 -1。
+ */
 int gpio_export_check(int gpio_num) {
     char gpio_path[64];
 
@@ -23,7 +35,13 @@ int gpio_export_check(int gpio_num) {
     return -1;  // GPIO not exported yet
 }
 
-// Initialize GPIO (export and set direction)
+/**
+ * @brief 初始化 GPIO。
+ * 
+ * @param num GPIO 编号。
+ * @param direct GPIO 方向。
+ * @return 成功返回 0，失败返回 -1。
+ */
 int gpio_init(enum Gpio_num num, enum Gpio_direction direct) {
     char path[64];
     int fd, ret;
@@ -69,7 +87,12 @@ int gpio_init(enum Gpio_num num, enum Gpio_direction direct) {
     return 0;
 }
 
-// De-initialize GPIO (unexport)
+/**
+ * @brief 反初始化 GPIO。
+ * 
+ * @param num GPIO 编号。
+ * @return void
+ */
 void gpio_deinit(enum Gpio_num num) {
     int fd;
     char buffer[4];
@@ -84,7 +107,12 @@ void gpio_deinit(enum Gpio_num num) {
     close(fd);
 }
 
-// Read GPIO value (0 or 1)
+/**
+ * @brief 读取 GPIO 值。
+ * 
+ * @param num GPIO 编号。
+ * @return 成功返回 GPIO 值，失败返回 -1。
+ */
 int gpio_read(enum Gpio_num num) {
     char path[64];
     char value_str[4];
@@ -107,7 +135,13 @@ int gpio_read(enum Gpio_num num) {
     return atoi(value_str);  // Return the GPIO value
 }
 
-// Write GPIO value (0 or 1)
+/**
+ * @brief 写入 GPIO 值。
+ * 
+ * @param num GPIO 编号。
+ * @param value 要写入的值。
+ * @return void
+ */
 void gpio_write(enum Gpio_num num, int value) {
     char path[64];
     char value_str[2];
@@ -126,7 +160,12 @@ void gpio_write(enum Gpio_num num, int value) {
     close(fd);
 }
 
-// Toggle GPIO value
+/**
+ * @brief 切换 GPIO 值。
+ * 
+ * @param num GPIO 编号。
+ * @return void
+ */
 void gpio_toggle(enum Gpio_num num) {
     int value = gpio_read(num);
     if (value != -1) {
@@ -134,7 +173,13 @@ void gpio_toggle(enum Gpio_num num) {
     }
 }
 
-// Get GPIO status
+/**
+ * @brief 获取 GPIO 状态。
+ * 
+ * @param num GPIO 编号。
+ * @param status 保存 GPIO 状态。
+ * @return 成功返回 0，失败返回 -1。
+ */
 int gpio_get_status(enum Gpio_num num, struct Gpio_status *status) {
     char path[64];
     char buffer[8];
@@ -171,7 +216,13 @@ int gpio_get_status(enum Gpio_num num, struct Gpio_status *status) {
     return 0;
 }
 
-// Set GPIO direction
+/**
+ * @brief 设置 GPIO 方向。
+ * 
+ * @param num GPIO 编号。
+ * @param direct GPIO 方向。
+ * @return void
+ */
 void gpio_set_direction(enum Gpio_num num, enum Gpio_direction direct) {
     char path[64];
     int fd;
@@ -191,7 +242,13 @@ void gpio_set_direction(enum Gpio_num num, enum Gpio_direction direct) {
     close(fd);
 }
 
-// Set GPIO edge trigger type
+/**
+ * @brief 设置 GPIO 边缘触发。
+ * 
+ * @param num GPIO 编号。
+ * @param edge 边缘触发类型。
+ * @return 成功返回 0，失败返回 -1。
+ */
 int gpio_set_edge(enum Gpio_num num, enum Gpio_edge edge) {
     char path[64];
     int fd;
@@ -226,7 +283,13 @@ int gpio_set_edge(enum Gpio_num num, enum Gpio_edge edge) {
     return 0;
 }
 
-// Set GPIO active_low mode
+/**
+ * @brief 设置 GPIO active_low 属性。
+ * 
+ * @param num GPIO 编号。
+ * @param active_low 0 = normal, 1 = active low。
+ * @return 成功返回 0，失败返回 -1。
+ */
 int gpio_set_active_low(enum Gpio_num num, int active_low) {
     char path[64];
     int fd;
@@ -245,7 +308,13 @@ int gpio_set_active_low(enum Gpio_num num, int active_low) {
     return 0;
 }
 
-// Wait for GPIO edge event
+/**
+ * @brief 等待 GPIO 边缘触发事件。
+ * 
+ * @param num GPIO 编号。
+ * @param timeout_ms 超时时间（毫秒）。
+ * @return 1 = 事件，0 = 超时，-1 = 错误。
+ */
 int gpio_wait_for_edge(enum Gpio_num num, int timeout_ms) {
     char path[64];
     int fd;

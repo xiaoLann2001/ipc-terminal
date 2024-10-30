@@ -177,6 +177,7 @@ uint16_t convert_color_bit16(uint32_t color, enum FB_COLOR_FORMAT format) {
 
 /**
  * @brief 在指定位置绘制帧。
+ * 
  * @param frame 帧数据的指针。 注意要四字节对齐。
  * @param off_x 起始 X 坐标。
  * @param off_y 起始 Y 坐标。
@@ -227,6 +228,14 @@ int framebuffer_set_region(uint32_t *frame, int off_x, int off_y, int img_width,
     return 0;
 }
 
+/**
+ * @brief 在 framebuffer 中绘制 RGB565 格式的帧。
+ * 
+ * @param frame 帧数据的指针。 注意要两字节对齐。
+ * @param width 帧的宽度。
+ * @param height 帧的高度。
+ * @return 成功返回 0，失败返回 -1。
+ */
 int framebuffer_set_frame_rgb565(uint16_t *frame, int width, int height) {
     if (fb_fd == -1) {
         fprintf(stderr, "Framebuffer not initialized\n");

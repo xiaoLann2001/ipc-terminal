@@ -1,9 +1,8 @@
-#include "Pantilt/Pantilt.h"
+#include "Pantilt.h"
 
-extern "C" {
-    #include "Pantilt/pwm.h"
-}
-
+/**
+ * @brief Pantilt 类构造函数。
+ */
 Pantilt::Pantilt() {
     // 初始化 PWM8 和 PWM9
     pwm_init(PWM8_M1);  // 用于控制俯仰的180°舵机
@@ -21,6 +20,9 @@ Pantilt::Pantilt() {
     reset();  // 初始化舵机角度
 }
 
+/**
+ * @brief Pantilt 类析构函数。
+ */
 Pantilt::~Pantilt() {
     reset();  // 复位舵机
 
@@ -31,31 +33,51 @@ Pantilt::~Pantilt() {
     pwm_deinit(PWM9_M1);
 }
 
+/**
+ * @brief 俯仰角上抬。
+ */
 void Pantilt::up() {
     setTilt(tilt_angle - 15);
-    printf("tilt_angle: %d\n", tilt_angle);
+    LOG_DEBUG("tilt_angle: %d\n", tilt_angle);
 }
 
+/**
+ * @brief 俯仰角下视。
+ */
 void Pantilt::down() {
     setTilt(tilt_angle + 15);
-    printf("tilt_angle: %d\n", tilt_angle);
+    LOG_DEBUG("tilt_angle: %d\n", tilt_angle);
 }
 
+/**
+ * @brief 左转。
+ */
 void Pantilt::left() {
     setPan(pan_angle + 15);
-    printf("pan_angle: %d\n", pan_angle);
+    LOG_DEBUG("pan_angle: %d\n", pan_angle);
 }
 
+/**
+ * @brief 右转。
+ */
 void Pantilt::right() {
     setPan(pan_angle - 15);
-    printf("pan_angle: %d\n", pan_angle);
+    LOG_DEBUG("pan_angle: %d\n", pan_angle);
 }
 
+/**
+ * @brief 复位舵机。
+ */
 void Pantilt::reset() {
     setPan(0);
     setTilt(0);
 }
 
+/**
+ * @brief 设置俯仰角度。
+ * 
+ * @param target_angle 目标角度。
+ */
 void Pantilt::setTilt(int target_angle) {
     // 限制目标角度在 -45 到 90 范围内
     if (target_angle < -45) {
@@ -71,6 +93,11 @@ void Pantilt::setTilt(int target_angle) {
     tilt_angle = target_angle;
 }
 
+/**
+ * @brief 设置旋转角度。
+ * 
+ * @param target_angle 目标角度。
+ */
 void Pantilt::setPan(int target_angle) {
     // 限制目标角度在 -180 到 180 范围内
     if (target_angle < -180) {
@@ -105,6 +132,13 @@ void Pantilt::setPan(int target_angle) {
     pan_angle = target_angle;
 }
 
+/**
+ * @brief 将角度映射为 PWM 占空比。
+ * 
+ * @param angle 角度。
+ * @param max_angle 最大角度。
+ * @return unsigned int PWM 占空比。
+ */
 unsigned int Pantilt::mapAngleToDutyCycle(int angle, int max_angle) {
     return min_duty_cycle_ns + (angle * (max_duty_cycle_ns - min_duty_cycle_ns)) / max_angle;
 }

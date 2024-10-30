@@ -3,14 +3,10 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <unordered_map>
+#include <functional>
 
-#include "Signal/Signal.h"
-
-#include "led/led.h"
-#include "Pantilt/Pantilt.h"
-#include "Video/Video.h"
-#include "Display/Display.h"
-#include "Network/Network.h"
+#include "global.h"
 
 struct ControlSignal {
     int module_id;
@@ -60,31 +56,22 @@ public:
     Control();
     ~Control();
 
-    Display *display;
-    Video *video;
-    Pantilt *pantilt;
-
     Signal<ControlSignal> signal_control_received;
 
     // 接收网络数据槽函数
     void onNetworkReceived(const std::string& data);
 
+    // 注册控制函数
+    void registerControlFunction(int module_id, int opcode, std::function<void(int)> func);
+
 private:
+    // 控制信号解析函数
     ControlSignal parseSignal(const std::string& data);
 
+    // 控制函数（采用函数指针数组）进行回调
     void dispatchSignal(const ControlSignal& signal);
 
-    void init();
-
-    // 函数指针数组，用于存储不同模块的操作处理函数
-    using ControlFunction = std::function<void(int)>;
-    std::vector<ControlFunction> led_control_functions;
-    std::vector<ControlFunction> pantilt_control_functions;
-    std::vector<ControlFunction> display_control_functions;
-
-    // 定义各个模块的处理函数
-    void handleLEDControl(int opcode, int param);
-    void handlePantiltControl(int opcode, int param);
-    void handleDisplayControl(int opcode, int param);
+    // 映射各个模块的控制函数，使用哈希表存储
+    std::unordered_map<int, std::unordered_map<int, std::function<void(int)>>> control_functions;
 };
 

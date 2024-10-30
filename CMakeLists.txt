@@ -31,10 +31,11 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ 3rdparty.out)
 set(SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/code/src")
 file(GLOB SRC_FILES "main.cpp" 
                     ${SRC_DIR}/Network/Network.cpp
+
                     ${SRC_DIR}/Control/Control.cpp
 
-                    ${SRC_DIR}/led/led.c
-                    ${SRC_DIR}/led/gpio.c
+                    ${SRC_DIR}/Led/Led.cpp
+                    ${SRC_DIR}/Led/gpio.c
 
                     ${SRC_DIR}/Pantilt/Pantilt.cpp
                     ${SRC_DIR}/Pantilt/pwm.c
@@ -44,12 +45,11 @@ file(GLOB SRC_FILES "main.cpp"
                     
                     ${SRC_DIR}/Video/Video.cpp
                     ${SRC_DIR}/Video/luckfox_video.cpp
-                    ${SRC_DIR}/Video/luckfox_rtsp.c
                     ${SRC_DIR}/Video/luckfox_rgn_draw.cpp
                     ${SRC_DIR}/Video/yolov5.cpp
                     ${SRC_DIR}/Video/postprocess.cpp
+                    ${SRC_DIR}/Video/luckfox_rtsp.c
                     ${SRC_DIR}/Video/luckfox_osd.c
-
                     ${SRC_DIR}/Video/osd/*.c
 
                     ${SRC_DIR}/param/*.c
@@ -94,10 +94,18 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 target_include_directories(${PROJECT_NAME} PUBLIC
     ${OpenCV_INCLUDE_DIRS}
     ${CMAKE_CURRENT_SOURCE_DIR}/code/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/code/include/Network
+    ${CMAKE_CURRENT_SOURCE_DIR}/code/include/Network/osd
+    ${CMAKE_CURRENT_SOURCE_DIR}/code/include/Control
+    ${CMAKE_CURRENT_SOURCE_DIR}/code/include/Led
+    ${CMAKE_CURRENT_SOURCE_DIR}/code/include/Pantilt
+    ${CMAKE_CURRENT_SOURCE_DIR}/code/include/Display
     ${CMAKE_CURRENT_SOURCE_DIR}/code/include/Video
     ${CMAKE_CURRENT_SOURCE_DIR}/code/include/Video/osd
+    ${CMAKE_CURRENT_SOURCE_DIR}/code/include/Signal
     ${CMAKE_CURRENT_SOURCE_DIR}/code/include/log
     ${CMAKE_CURRENT_SOURCE_DIR}/code/include/param
+
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/include/rkaiq
     ${CMAKE_CURRENT_SOURCE_DIR}/include/rkaiq/uAPI2
@@ -110,6 +118,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include/rockchip
     ${CMAKE_CURRENT_SOURCE_DIR}/include/rknn
     ${CMAKE_CURRENT_SOURCE_DIR}/include/freetype2
+
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/rknpu2/include
 )
 
@@ -124,10 +133,5 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/code/model/ DESTINATION ${CMAKE_IN
         FILES_MATCHING PATTERN "*.*"    # Match all files in the model directory
 )
 
+# Install configuration files
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/code/ipc-terminal.ini DESTINATION ${CMAKE_INSTALL_PREFIX})
-
-# # Install the shared libraries from code/lib into install/lib
-# install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/code/lib/ DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-#         FILES_MATCHING PATTERN "*.so"   # Only match shared libraries
-#         PATTERN "*.a" EXCLUDE           # Exclude static libraries if not needed
-# )

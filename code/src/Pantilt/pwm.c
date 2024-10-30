@@ -1,8 +1,14 @@
-#include "Pantilt/pwm.h"
+#include "pwm.h"
 
 #define SYSFS_PWM_PATH "/sys/class/pwm/pwmchip"
 
-// Helper function to write to a sysfs file
+/**
+ * @brief 写入 sysfs 文件。
+ * 
+ * @param path 文件路径。
+ * @param value 要写入的值。
+ * @return 成功返回 0，失败返回 -1。
+ */
 static int sysfs_write(const char *path, const char *value) {
     int fd = open(path, O_WRONLY);
     if (fd < 0) {
@@ -14,7 +20,14 @@ static int sysfs_write(const char *path, const char *value) {
     return 0;
 }
 
-// Helper function to read from a sysfs file
+/**
+ * @brief 读取 sysfs 文件。
+ * 
+ * @param path 文件路径。
+ * @param value 读取的值。
+ * @param size 读取的大小。
+ * @return 成功返回 0，失败返回 -1。
+ */
 static int sysfs_read(const char *path, char *value, size_t size) {
     int fd = open(path, O_RDONLY);
     if (fd < 0) {
@@ -26,12 +39,27 @@ static int sysfs_read(const char *path, char *value, size_t size) {
     return 0;
 }
 
-// Helper to generate sysfs path for PWM
+/**
+ * @brief 生成 PWM 文件路径.
+ *
+ * 此函数根据给定的 PWM 通道号生成 PWM 操作文件的路径.
+ *
+ * @param path 用于存储生成的路径的缓冲区.
+ * @param pwm_num PWM 通道号.
+ * @param filename 需要拼接的文件名.
+ */
 void pwm_generate_path(char *path, int pwm_num, const char *filename) {
     sprintf(path, "%s%d/pwm0/%s", SYSFS_PWM_PATH, pwm_num, filename);
 }
 
-// Initialize PWM
+/**
+ * @brief 初始化 PWM 通道.
+ *
+ * 此函数导出指定的 PWM 通道，并为后续操作做好准备.
+ *
+ * @param pwm_num PWM 通道号.
+ * @return 成功返回 0，失败返回 -1.
+ */
 int pwm_init(enum PWM_num pwm_num) {
     char path[64];
     
@@ -47,7 +75,14 @@ int pwm_init(enum PWM_num pwm_num) {
     return sysfs_write(path, "0");
 }
 
-// Deinitialize (unexport) PWM
+/**
+ * @brief 释放 PWM 通道.
+ *
+ * 此函数取消导出 PWM 通道，释放资源.
+ *
+ * @param pwm_num PWM 通道号.
+ * @return 成功返回 0，失败返回 -1.
+ */
 int pwm_deinit(enum PWM_num pwm_num) {
     char path[64];
     
@@ -56,7 +91,15 @@ int pwm_deinit(enum PWM_num pwm_num) {
     return sysfs_write(path, "0");
 }
 
-// Set PWM period (in nanoseconds)
+/**
+ * @brief 设置 PWM 周期.
+ *
+ * 设置指定 PWM 通道的周期（单位：纳秒）.
+ *
+ * @param pwm_num PWM 通道号.
+ * @param period_ns PWM 周期（纳秒）.
+ * @return 成功返回 0，失败返回 -1.
+ */
 int pwm_set_period(enum PWM_num pwm_num, unsigned int period_ns) {
     char path[64];
     char value[32];
@@ -67,7 +110,15 @@ int pwm_set_period(enum PWM_num pwm_num, unsigned int period_ns) {
     return sysfs_write(path, value);
 }
 
-// Set PWM duty cycle (in nanoseconds)
+/**
+ * @brief 设置 PWM 占空比.
+ *
+ * 设置指定 PWM 通道的占空比（单位：纳秒）.
+ *
+ * @param pwm_num PWM 通道号.
+ * @param duty_cycle_ns PWM 占空比（纳秒）.
+ * @return 成功返回 0，失败返回 -1.
+ */
 int pwm_set_duty_cycle(enum PWM_num pwm_num, unsigned int duty_cycle_ns) {
     char path[64];
     char value[32];
@@ -78,7 +129,15 @@ int pwm_set_duty_cycle(enum PWM_num pwm_num, unsigned int duty_cycle_ns) {
     return sysfs_write(path, value);
 }
 
-// Set PWM polarity
+/**
+ * @brief 设置 PWM 输出极性.
+ *
+ * 设置指定 PWM 通道的输出极性.
+ *
+ * @param pwm_num PWM 通道号.
+ * @param polarity 输出极性（normal/inverted）.
+ * @return 成功返回 0，失败返回 -1.
+ */
 int pwm_set_polarity(enum PWM_num pwm_num, const char* polarity) {
     char path[64];
     
@@ -87,7 +146,13 @@ int pwm_set_polarity(enum PWM_num pwm_num, const char* polarity) {
     return sysfs_write(path, polarity);
 }
 
-// Enable or disable PWM
+/**
+ * @brief 启用/禁用 PWM 通道.
+ *
+ * @param pwm_num PWM 通道号.
+ * @param enable 1 = 启用，0 = 禁用.
+ * @return 成功返回 0，失败返回 -1.
+ */
 int pwm_enable(enum PWM_num pwm_num, int enable) {
     char path[64];
     char value[8];
@@ -98,7 +163,15 @@ int pwm_enable(enum PWM_num pwm_num, int enable) {
     return sysfs_write(path, value);
 }
 
-// Get the current status of the PWM
+/**
+ * @brief 获取 PWM 通道的状态.
+ *
+ * 读取 PWM 通道的当前周期、占空比和启用状态.
+ *
+ * @param pwm_num PWM 通道号.
+ * @param status 保存 PWM 状态.
+ * @return 成功返回 0，失败返回 -1.
+ */
 int pwm_get_status(enum PWM_num pwm_num, struct Pwm_status *status) {
     char path[64];
     char value[32];

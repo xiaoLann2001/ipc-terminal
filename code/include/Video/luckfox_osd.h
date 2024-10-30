@@ -1,6 +1,6 @@
 
 #include "sample_comm.h"
-#include "osd/osd.h"
+#include "osd.h"
 
 #if __cplusplus
 extern "C" {

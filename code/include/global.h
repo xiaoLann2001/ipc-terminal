@@ -1,8 +1,12 @@
+#ifndef __GLOBAL_H__
+#define __GLOBAL_H__
 
+#include "log.h"
+#include "param.h"
 
-#include "log/log.h"
-#include "param/param.h"
+#ifdef __cplusplus
 
+#include "Signal.h"
+#endif
 
-
-
+#endif // __GLOBAL_H__

@@ -1,5 +1,10 @@
-#ifndef PANTILT_H
-#define PANTILT_H
+#pragma once
+
+#include "global.h"
+
+extern "C" {
+    #include "pwm.h"
+}
 
 class Pantilt {
 public:
@@ -38,5 +43,3 @@ private:
     // 辅助函数：将角度映射为 PWM 占空比
     unsigned int mapAngleToDutyCycle(int angle, int max_angle);
 };
-
-#endif // PANTILT_H

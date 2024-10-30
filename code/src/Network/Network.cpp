@@ -1,6 +1,8 @@
 #include "Network/Network.h"
 
-// 构造函数：初始化网络并启动收发线程
+/**
+ * @brief Network 类构造函数。
+ */
 Network::Network() {
     server_ip = rk_param_get_string("network:server_ip", "127.0.0.1");
     server_port = rk_param_get_int("network:port", 8888);
@@ -8,13 +10,21 @@ Network::Network() {
     run_thread = std::thread(&Network::run, this);
 }
 
+/**
+ * @brief Network 类构造函数。
+ * 
+ * @param server_ip 服务器 IP 地址。
+ * @param server_port 服务器端口。
+ */
 Network::Network(const std::string& server_ip, int server_port)
     : server_ip(server_ip), server_port(server_port), is_connected(false) {
 
     run_thread = std::thread(&Network::run, this);
 }
 
-// 析构函数：关闭连接并停止线程
+/**
+ * @brief Network 类析构函数。
+ */
 Network::~Network() {
     // 设置退出标志，通知线程退出
     flag_quit = true;
@@ -45,7 +55,9 @@ Network::~Network() {
     std::cout << "Network disconnected and resources released." << std::endl;
 }
 
-// 类运行线程
+/**
+ * @brief Network 类运行线程。
+ */
 void Network::run() {
     connect_to_server();
     receive_thread = std::thread(&Network::receive_thread_func, this);
@@ -71,7 +83,9 @@ void Network::run() {
     }
 }
 
-// 连接到服务器
+/**
+ * @brief 连接到服务器。
+ */
 void Network::connect_to_server() {
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) {
@@ -102,14 +116,20 @@ void Network::connect_to_server() {
     }
 }
 
-// 发送数据到服务器
+/**
+ * @brief 发送数据到服务器。
+ * 
+ * @param data 要发送的数据。
+ */
 void Network::send_data(const std::string& data) {
     std::lock_guard<std::mutex> lock(mtx_send);
     send_queue.push(data);
     cond_var_send.notify_one();  // 唤醒发送线程
 }
 
-// 接收数据线程函数
+/**
+ * @brief 接收数据线程函数。
+ */
 void Network::receive_thread_func() {
     char buffer[1024];
     while (!flag_quit && is_connected) {
@@ -149,7 +169,9 @@ void Network::receive_thread_func() {
     }
 }
 
-// 发送数据线程函数
+/**
+ * @brief 发送数据线程函数。
+ */
 void Network::send_thread_func() {
     std::string data_to_send;
     while (!flag_quit && is_connected) {

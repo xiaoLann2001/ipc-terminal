@@ -91,6 +91,9 @@
         "global.h": "c",
         "param.h": "c",
         "cinttypes": "cpp",
-        "osd.h": "c"
+        "osd.h": "c",
+        "font_factory.h": "c",
+        "osd_common.h": "c",
+        "pantilt.h": "c"
     }
 }

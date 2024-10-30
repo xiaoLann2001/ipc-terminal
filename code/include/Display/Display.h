@@ -11,12 +11,7 @@ public:
     Display();
     ~Display();
 
-    enum class PushResult {
-        Success,
-        FrameTypeError,
-        QueueFull
-    };
-
+    // 推送帧到显示队列
     void get_resolution(int* width, int* height, int* bit_depth) {
         *width = this->width;
         *height = this->height;
@@ -27,10 +22,10 @@ public:
     void push_frame(const cv::Mat& frame);
 
     // 暂停显示
-    void pause_display();
+    void pause();
 
     // 继续显示
-    void resume_display();
+    void resume();
 
 private:
     // 显示线程的运行函数

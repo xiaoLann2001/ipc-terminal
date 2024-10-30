@@ -12,7 +12,7 @@
 #include FT_IMAGE_H
 
 #include "color_table.h"
-#include "common.h"
+#include "param/common.h"
 #include "osd_common.h"
 
 int create_font(const char *font_path, int font_size);

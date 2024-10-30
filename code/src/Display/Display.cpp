@@ -4,6 +4,9 @@ extern "C" {
     #include "Display/framebuffer.h"
 }
 
+/**
+ * @brief 显示类构造函数。
+ */
 Display::Display() {
     // 初始化 framebuffer 设备，自动获取分辨率和色深
     framebuffer_init(FB_DEVICE);
@@ -16,6 +19,9 @@ Display::Display() {
     display_thread = std::thread(&Display::display_on_fb, this);
 }
 
+/**
+ * @brief 显示类析构函数。
+ */
 Display::~Display() {
     // 设置退出标志，并唤醒所有等待的线程
     {
@@ -34,6 +40,11 @@ Display::~Display() {
     framebuffer_deinit();
 }
 
+/**
+ * @brief 推送帧到显示队列。
+ * 
+ * @param frame 要显示的帧。
+ */
 void Display::push_frame(const cv::Mat& frame) {
     if (flag_pause || flag_quit) {
         return;
@@ -48,12 +59,18 @@ void Display::push_frame(const cv::Mat& frame) {
     cond_var_display.notify_one(); // 唤醒显示线程
 }
 
-void Display::pause_display() {
+/**
+ * @brief 暂停显示。
+ */
+void Display::pause() {
     std::lock_guard<std::mutex> lock(mtx_display);
     flag_pause = true;
 }
 
-void Display::resume_display() {
+/**
+ * @brief 继续显示。
+ */
+void Display::resume() {
     {
         std::lock_guard<std::mutex> lock(mtx_display);
         flag_pause = false;
@@ -64,6 +81,9 @@ void Display::resume_display() {
     cond_var_display.notify_one(); // 唤醒显示线程继续工作
 }
 
+/**
+ * @brief 显示线程的运行函数。
+ */
 void Display::display_on_fb() {
     while (!flag_quit) {
         std::unique_lock<std::mutex> ulock(mtx_display);

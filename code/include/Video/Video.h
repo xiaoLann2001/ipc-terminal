@@ -8,15 +8,15 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
-#include "Video/luckfox_rtsp.h"
-#include "Video/luckfox_video.h"
-#include "Video/luckfox_rgn_draw.h"
-#include "Video/luckfox_osd.h"
+#include "luckfox_rtsp.h"
+#include "luckfox_video.h"
+#include "luckfox_rgn_draw.h"
+#include "luckfox_osd.h"
 
 #include "yolov5.h"
 #include "postprocess.h"
 
-#include "Signal/Signal.h"
+#include "Signal.h"
 
 class Video {
 public:

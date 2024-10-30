@@ -14,13 +14,14 @@
 #include <cerrno>
 #include <cstring>
 
-#include "param/param.h"
-#include "Signal/Signal.h"
+#include "global.h"
 
 class Network {
 public:
     Network();
+
     Network(const std::string& server_ip, int server_port);
+    
     ~Network();
 
     // 从Control类接收数据并放入发送队列
@@ -30,7 +31,9 @@ public:
 
 private:
     void run(); // 类运行线程
+
     void receive_thread_func(); // 接收数据线程
+
     void send_thread_func();    // 发送数据线程
 
     void connect_to_server(); // 连接到服务器
