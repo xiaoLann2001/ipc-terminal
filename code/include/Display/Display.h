@@ -1,10 +1,12 @@
 #pragma once
 
 #include <queue>
-#include <mutex>
 #include <thread>
+#include <mutex>
 #include <condition_variable>
 #include <opencv2/opencv.hpp>
+
+#include "global.h"
 
 class Display {
 public:

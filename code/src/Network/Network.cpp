@@ -4,6 +4,12 @@
  * @brief Network 类构造函数。
  */
 Network::Network() {
+    {
+        std::lock_guard<std::mutex> lock(mtx_network);
+        network_run_ = true;
+        is_connected_ = false;
+    }
+
     server_ip = rk_param_get_string("network:server_ip", "127.0.0.1");
     server_port = rk_param_get_int("network:port", 8888);
 
@@ -17,7 +23,7 @@ Network::Network() {
  * @param server_port 服务器端口。
  */
 Network::Network(const std::string& server_ip, int server_port)
-    : server_ip(server_ip), server_port(server_port), is_connected(false) {
+    : server_ip(server_ip), server_port(server_port), is_connected_(false) {
 
     run_thread = std::thread(&Network::run, this);
 }
@@ -27,32 +33,39 @@ Network::Network(const std::string& server_ip, int server_port)
  */
 Network::~Network() {
     // 设置退出标志，通知线程退出
-    flag_quit = true;
+    {
+        std::lock_guard<std::mutex> lock(mtx_network);
+        network_run_ = false;
+        is_connected_ = false;
+    }
 
     // 唤醒发送线程，避免发送线程因条件变量阻塞
+    cond_var_ntp.notify_all();
     cond_var_send.notify_all();
     cond_var_connect.notify_all();
+    cond_var_run.notify_all();
 
-    // 确保发送和接收线程能够退出
     if (receive_thread.joinable()) {
         receive_thread.join();  // 等待接收线程完成
     }
+
     if (send_thread.joinable()) {
         send_thread.join();  // 等待发送线程完成
     }
 
-    // 如果连接是建立的，关闭连接
-    if (is_connected) {
-        close(sockfd);  // 关闭 socket
-        is_connected = false;
+    if (ntp_enabled && ntp_thread.joinable()) {
+        ntp_thread.join();  // 等待 NTP 线程完成
     }
 
-    // 停止运行线程（如有）
     if (run_thread.joinable()) {
         run_thread.join();  // 等待运行线程完成
     }
 
-    std::cout << "Network disconnected and resources released." << std::endl;
+    if (sockfd > 0) {
+        close(sockfd);  // 关闭套接字
+    }
+
+    LOG_DEBUG("Network disconnected and resources released.\n");
 }
 
 /**
@@ -62,15 +75,18 @@ void Network::run() {
     connect_to_server();
     receive_thread = std::thread(&Network::receive_thread_func, this);
     send_thread = std::thread(&Network::send_thread_func, this);
-    if (rk_param_get_int("network.ntp_enabled", 1)) {
+    ntp_enabled = rk_param_get_int("network.ntp_enabled", 1);
+    if (ntp_enabled) {
         ntp_thread = std::thread(&Network::ntp_thread_func, this);
     }
 
-    while (!flag_quit) {
-        if (!is_connected) {  // 如果服务器关闭
+    while (network_run_) {
+        if (!is_connected_) {  // 如果服务器关闭
             cond_var_send.notify_all();
-            std::cout << "Server disconnected, reconnecting..." << std::endl;
-            close(sockfd);          // 关闭连接
+            LOG_DEBUG("Server disconnected, reconnecting...\n");
+
+            if (sockfd > 0) close(sockfd);          // 关闭连接
+            sockfd = -1;
 
             if (receive_thread.joinable()) receive_thread.join();
             if (send_thread.joinable()) send_thread.join();
@@ -80,10 +96,13 @@ void Network::run() {
             send_thread = std::thread(&Network::send_thread_func, this);
         } else {
             // 每秒检查一次连接状态
-            // std::cout << "Checking connection..." << std::endl;
-            std::this_thread::sleep_for(std::chrono::seconds(1));
+            // LOG_DEBUG("Checking connection...\n");
+            std::unique_lock<std::mutex> lock(mtx_run);
+            cond_var_run.wait_for(lock, std::chrono::seconds(1), [this] { return !is_connected_; });
         }
     }
+
+    LOG_DEBUG("Network thread exited\n");
 }
 
 /**
@@ -92,7 +111,7 @@ void Network::run() {
 void Network::connect_to_server() {
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) {
-        std::cerr << "Error creating socket" << std::endl;
+        LOG_ERROR("Error creating socket\n");
         return;
     }
 
@@ -101,18 +120,21 @@ void Network::connect_to_server() {
     server_addr.sin_port = htons(server_port);
     inet_pton(AF_INET, server_ip.c_str(), &server_addr.sin_addr);
 
-    while (!flag_quit) {
-        std::cout << "Connecting to server: " << server_ip << ":" << server_port << std::endl;
+    while (network_run_) {
+        LOG_DEBUG("Connecting to server: %s:%d\n", server_ip.c_str(), server_port);
         if (connect(sockfd, (struct sockaddr*)&server_addr, sizeof(server_addr)) == 0) {
-            std::cout << "Connected to server: " << server_ip << ":" << server_port << std::endl;
-            is_connected = true;
+            LOG_DEBUG("Connected to server: %s:%d\n", server_ip.c_str(), server_port);
+            {
+                std::lock_guard<std::mutex> lock(mtx_network);
+                is_connected_ = true;
+            }
             break;
         } else {
-            std::cerr << "Connection failed, retrying in 30 seconds..." << std::endl;
-            // 等待 30 秒或直到 flag_quit 被设置为 true
+            LOG_ERROR("Connection failed, retrying in 30 seconds...\n");
+            // 等待 30 秒或直到 network_run_ 被设置为 false
             std::unique_lock<std::mutex> lock(mtx_connect);
-            if (cond_var_connect.wait_for(lock, std::chrono::seconds(30), [this] { return flag_quit; })) {
-                std::cout << "Quit flag set. Exiting connection attempt." << std::endl;
+            if (cond_var_connect.wait_for(lock, std::chrono::seconds(30), [this] { return !network_run_; })) {
+                LOG_DEBUG("Quit flag set. Exiting connection attempt.\n");
                 break;
             }
         }
@@ -125,6 +147,11 @@ void Network::connect_to_server() {
  * @param data 要发送的数据。
  */
 void Network::send_data(const std::string& data) {
+    if (!is_connected_) {
+        LOG_ERROR("Not connected to server\n");
+        return;
+    }
+
     std::lock_guard<std::mutex> lock(mtx_send);
     send_queue.push(data);
     cond_var_send.notify_one();  // 唤醒发送线程
@@ -135,7 +162,7 @@ void Network::send_data(const std::string& data) {
  */
 void Network::receive_thread_func() {
     char buffer[1024];
-    while (!flag_quit && is_connected) {
+    while (network_run_ && is_connected_) {
         // 设置 pollfd
         struct pollfd fds[1];
         fds[0].fd = sockfd;         // 监视的套接字
@@ -146,7 +173,7 @@ void Network::receive_thread_func() {
 
         // 检查 poll 的返回值
         if (ret < 0) {
-            std::cerr << "poll() error" << std::endl;
+            LOG_ERROR("poll() error\n");
             break;  // 发生错误，退出
         } else if (ret == 0) {
             // 超时，没有数据可读，继续循环
@@ -158,18 +185,29 @@ void Network::receive_thread_func() {
             ssize_t bytes_received = recv(sockfd, buffer, sizeof(buffer), 0);
             if (bytes_received > 0) {
                 std::string received_data(buffer, bytes_received);
-                std::cout << "Received: " << received_data << std::endl;
+                LOG_DEBUG("Received: %s\n", received_data.c_str());
                 signal_network_received.emit(received_data);
             } else if (bytes_received == 0) {   // 服务器关闭连接
-                std::cerr << "Connection closed by server" << std::endl;
-                is_connected = false;   // 标记为未连接
+                LOG_ERROR("Connection closed by server\n");
+                {
+                    std::lock_guard<std::mutex> lock(mtx_network);
+                    is_connected_ = false;   // 标记为未连接
+                    cond_var_run.notify_all();  // 通知 RUN 线程尝试重新连接
+                }
                 break; // 连接关闭
             } else if (bytes_received == -1) {
-                std::cerr << "recv() error: " << strerror(errno) << std::endl;
+                LOG_ERROR("recv() error: %s\n", strerror(errno));
+                {
+                    std::lock_guard<std::mutex> lock(mtx_network);
+                    is_connected_ = false;   // 标记为未连接
+                    cond_var_run.notify_all();  // 通知 RUN 线程尝试重新连接
+                }
                 break; // 发生错误
             }
         }
     }
+
+    LOG_DEBUG("Receive thread exited\n");
 }
 
 /**
@@ -177,14 +215,14 @@ void Network::receive_thread_func() {
  */
 void Network::send_thread_func() {
     std::string data_to_send;
-    while (!flag_quit && is_connected) {
+    while (network_run_ && is_connected_) {
         {
             std::unique_lock<std::mutex> lock(mtx_send);
             cond_var_send.wait(lock, [this] {
-                return !send_queue.empty() || flag_quit || !is_connected;
+                return !send_queue.empty() || !network_run_ || !is_connected_;
             });
 
-            if (flag_quit || !is_connected) {  
+            if (!network_run_ || !is_connected_) {  
                 break;
             }
 
@@ -196,9 +234,11 @@ void Network::send_thread_func() {
 
         ssize_t bytes_sent = send(sockfd, data_to_send.c_str(), data_to_send.size(), 0);
         if (bytes_sent == -1) {
-            std::cerr << "Failed to send data" << std::endl;
+            LOG_ERROR("Failed to send data\n");
         }
     }
+
+    LOG_DEBUG("Send thread exited\n");
 }
 
 /**
@@ -207,14 +247,16 @@ void Network::send_thread_func() {
 void Network::ntp_thread_func() {
     int refresh_time_s = rk_param_get_int("network.ntp:refresh_time_s", 60);
 	const char *ntp_server = rk_param_get_string("network.ntp:ntp_server", "119.28.183.184");
-	LOG_INFO("refresh_time_s is %d, ntp_server is %s\n", refresh_time_s, ntp_server);
+	LOG_DEBUG("refresh_time_s is %d, ntp_server is %s\n", refresh_time_s, ntp_server);
     rkipc_ntp_update(ntp_server);
 
-    while (!flag_quit) {
+    while (network_run_) {
         // 每隔 60 秒发送一次 NTP 请求
         std::unique_lock<std::mutex> lock(mtx_ntp);
-        cond_var_ntp.wait_for(lock, std::chrono::seconds(refresh_time_s), [this] { return flag_quit; });
+        cond_var_ntp.wait_for(lock, std::chrono::seconds(refresh_time_s), [this] { return !network_run_; });
 
         rkipc_ntp_update(ntp_server);
     }
+
+    LOG_DEBUG("NTP thread exited\n");
 }

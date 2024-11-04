@@ -1,8 +1,5 @@
-#include "Display/Display.h"
-
-extern "C" {
-    #include "Display/framebuffer.h"
-}
+#include "Display.h"
+#include "framebuffer.h"
 
 /**
  * @brief 显示类构造函数。
@@ -38,6 +35,8 @@ Display::~Display() {
 
     // 释放 framebuffer 资源
     framebuffer_deinit();
+
+    LOG_DEBUG("Display deinitialized\n");
 }
 
 /**

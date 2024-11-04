@@ -34,6 +34,8 @@ Led::Led(enum Led_num led_num) : led_num_(led_num), on_time_(0), off_time_(0), b
 Led::~Led() {
     off();  // 关闭 LED
     gpio_deinit((Gpio_num)led_num_);
+
+    LOG_DEBUG("LED %d deinitialized\n", led_num_);
 }
 
 /**

@@ -1,8 +1,11 @@
 #pragma once
 
-#include <iostream>
+#include <mutex>
+#include <condition_variable>
 #include <thread>
+#include <memory>
 #include <chrono>
+#include <unordered_set>
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -25,14 +28,30 @@ public:
 
     Signal<cv::Mat> signal_video_frame;
 
+    void video_pipe0_start();
+    void video_pipe0_stop();
+    void video_pipe0_restart();
+
+    void video_pipe1_start();
+    void video_pipe1_stop();
+    void video_pipe1_restart();
+
+    void video_pipe2_start();
+    void video_pipe2_stop();
+    void video_pipe2_restart();
+
 private:
     void video_pipe0();
     void video_pipe1();
     void video_pipe2();
 
-    bool flag_quit;
+    bool video_run_;
+    bool pipe0_run_;
+    bool pipe1_run_;
+    bool pipe2_run_;
+
     std::mutex mtx_video;
-    std::thread *video_thread0;
-    std::thread *video_thread1;
-    std::thread *video_thread2;
+    std::unique_ptr<std::thread> video_thread0;
+    std::unique_ptr<std::thread> video_thread1;
+    std::unique_ptr<std::thread> video_thread2;
 };

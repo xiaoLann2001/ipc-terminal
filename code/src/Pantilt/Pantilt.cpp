@@ -31,6 +31,8 @@ Pantilt::~Pantilt() {
 
     pwm_enable(PWM9_M1, 0);  // 禁用 PWM9
     pwm_deinit(PWM9_M1);
+
+    LOG_DEBUG("Pantilt module deinitialized\n");
 }
 
 /**

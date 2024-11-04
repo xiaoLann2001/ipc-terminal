@@ -11,7 +11,7 @@ Control::Control() {
  * @brief 控制类析构函数
  */
 Control::~Control() {
-
+    LOG_DEBUG("Control module deinitializing\n");
 }
 
 /**

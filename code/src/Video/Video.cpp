@@ -3,48 +3,42 @@
 Video::Video()
 {
 
-    flag_quit = false;
+    video_run_ = true;
+    pipe0_run_ = true;
+    pipe1_run_ = true;
+    pipe2_run_ = true;
 
-    rkaiq_init();
-    rkmpi_sys_init();
-    vi_dev_init();
-    rtsp_init();
+    // rkaiq_init();
+    // rkmpi_sys_init();
+    // vi_dev_init();
+    // rtsp_init();
 
-    video_thread0 = new std::thread(&Video::video_pipe0, this);
-    video_thread1 = new std::thread(&Video::video_pipe1, this);
+    // video_thread0 = std::make_unique<std::thread>(&Video::video_pipe0, this);
+    // video_thread1 = std::make_unique<std::thread>(&Video::video_pipe1, this);
     
-    int ai_enable = rk_param_get_int("ai:enable", 0);
-    if (ai_enable) {
-        video_thread2 = new std::thread(&Video::video_pipe2, this);
-    }
+    // int ai_enable = rk_param_get_int("ai:enable", 0);
+    // if (ai_enable) {
+    //     video_thread2 = std::make_unique<std::thread>(&Video::video_pipe2, this);
+    // }
 }
 
 Video::~Video()
 {
     {
         std::lock_guard<std::mutex> lock(mtx_video);
-        flag_quit = true;
+        video_run_ = false;
     }
 
-    if (video_thread0->joinable())
-    {
-        video_thread0->join();
-    }
+    // if (video_thread0 && video_thread0->joinable()) video_thread0->join();
+    // if (video_thread0 && video_thread1->joinable()) video_thread1->join();
+    // if (video_thread0 && video_thread2->joinable()) video_thread2->join();
 
-    if (video_thread1->joinable())
-    {
-        video_thread1->join();
-    }
+    // rtsp_deinit();
+    // vi_dev_deinit();
+    // rkmpi_sys_deinit();
+    // rkaiq_deinit();
 
-    if (video_thread2->joinable())
-    {
-        video_thread2->join();
-    }
-
-    rtsp_deinit();
-    vi_dev_deinit();
-    rkmpi_sys_deinit();
-    rkaiq_deinit();
+    LOG_DEBUG("Video deinitialized\n");
 }
 
 void Video::video_pipe0()
@@ -53,8 +47,8 @@ void Video::video_pipe0()
     int pipeId = 0;
     int viChannelId = 0;
     int vencChannelId = 0;
-    int video_width = HIGH_BIT_RATE_WIDTH;
-    int video_height = HIGH_BIT_RATE_HEIGHT;
+    int video_width = rk_param_get_int("video.0:width", 2304);
+    int video_height = rk_param_get_int("video.0:height", 1296);
     // int video_width = 2304;
     // int video_height = 1296;
 
@@ -70,7 +64,7 @@ void Video::video_pipe0()
 
     rkipc_osd_init();
 
-    while (!flag_quit)
+    while (video_run_ && pipe0_run_)
     {
         // 获取编码后的帧，发送到 RTSP 服务器
         rtsp_send_frame(vencChannelId, &stFrame);
@@ -94,19 +88,19 @@ void Video::video_pipe1()
     int pipeId = 0;
     int viChannelId = 1;
     int vencChannelId = 1;
-    int video_width = LOW_BIT_RATE_WIDTH;
-    int video_height = LOW_BIT_RATE_HEIGHT;
-    // int video_width = 640;
-    // int video_height = 480;
+    int video_width = rk_param_get_int("video.1:width", 704);
+    int video_height = rk_param_get_int("video.1:height", 576);
+    // int video_width = 704;
+    // int video_height = 576;
 
 #if FPS_SHOW
     char fps_text[16];
     float fps = 0;
     memset(fps_text, 0, 16);
-    int x_scaled = (float)50.0 / 640 * video_width;
-    int y_scaled = (float)50.0 / 480 * video_height;
-    int font_scaled = (float)1.0 / 480 * video_height;
-    int thickness_scaled = (float)1.0 / 480 * video_height;
+    int x_scaled = (float)50.0 / 704 * video_width;
+    int y_scaled = (float)50.0 / 576 * video_height;
+    int font_scaled = (float)1.0 / 576 * video_height;
+    int thickness_scaled = (float)1.0 / 576 * video_height;
 #endif
     VENC_STREAM_S stFrame;
     VIDEO_FRAME_INFO_S stViFrame;
@@ -133,7 +127,7 @@ void Video::video_pipe1()
     vi_chn_init(pipeId, viChannelId, video_width, video_height, RK_FMT_YUV420SP);
     venc_init(vencChannelId, video_width, video_height, RK_VIDEO_ID_AVC, RK_FMT_RGB888);
 
-    while (!flag_quit)
+    while (video_run_ && pipe1_run_)
     {
         void *vi_data = vi_get_frame(pipeId, viChannelId, video_width, video_height, &stViFrame);
 
@@ -197,22 +191,23 @@ void Video::video_pipe2()
         int vehicle_detect = rk_param_get_int("ai.od:vehicle_detect", 0);   // class 1,2,3,4,5,7,8
         int pet_detect = rk_param_get_int("ai.od:pet_detect", 0);           // class 15,16
         
-        int detect_classes[80] = {0};
+        // detect classes set
+        std::unordered_set<int> detect_classes;
         if (people_detect) {
-            detect_classes[0] = 1;
+            detect_classes.insert(0);
         }
         if (vehicle_detect) {
-            detect_classes[1] = 1;
-            detect_classes[2] = 1;
-            detect_classes[3] = 1;
-            detect_classes[4] = 1;
-            detect_classes[5] = 1;
-            detect_classes[7] = 1;
-            detect_classes[8] = 1;
+            detect_classes.insert(1);
+            detect_classes.insert(2);
+            detect_classes.insert(3);
+            detect_classes.insert(4);
+            detect_classes.insert(5);
+            detect_classes.insert(7);
+            detect_classes.insert(8);
         } 
         if (pet_detect) {
-            detect_classes[15] = 1;
-            detect_classes[16] = 1;
+            detect_classes.insert(15);
+            detect_classes.insert(16);
         }
 
         // Rknn model
@@ -252,7 +247,7 @@ void Video::video_pipe2()
 
         vi_chn_init(pipeId, viChannelId, video_width, video_height, RK_FMT_YUV420SP);
 
-        while (!flag_quit)
+        while (video_run_ && pipe2_run_)
         {
             // usleep(100 * 1000);
             // get vi frame
@@ -275,7 +270,7 @@ void Video::video_pipe2()
                 {
                     object_detect_result *det_result = &(od_results.results[i]);
 
-                    if (detect_classes[det_result->cls_id] == 0) continue;
+                    if (detect_classes.count(det_result->cls_id) == 0) continue;
                     
                     // if (det_result->cls_id > 8) continue;
 
@@ -313,4 +308,133 @@ void Video::video_pipe2()
         release_yolov5_model(&rknn_app_ctx);
         deinit_post_process();
     }
+}
+
+void Video::video_pipe0_start() {
+    {
+        // 线程2依赖线程0
+        std::lock_guard<std::mutex> lock(mtx_video);
+        // 若已经启动则直接返回
+        if (pipe0_run_) {
+            LOG_ERROR("Video pipe 0 already started\n");
+            return;
+        }
+        pipe0_run_ = true;  // 设置运行标志位
+        video_thread0 = std::make_unique<std::thread>(&Video::video_pipe0, this);
+        // 若 AI 使能则启动 AI 线程
+        int ai_enable = rk_param_get_int("ai:enable", 0);
+        if (ai_enable && !pipe2_run_) {
+            pipe2_run_ = true;
+            video_thread2 = std::make_unique<std::thread>(&Video::video_pipe2, this);
+        }
+    }
+
+    LOG_DEBUG("Video pipe 0 started\n");
+}
+
+void Video::video_pipe0_stop() {
+    {
+        // 线程2依赖线程0
+        std::lock_guard<std::mutex> lock(mtx_video);
+        if (!pipe0_run_) {
+            LOG_ERROR("Video pipe 0 already stopped\n");
+            return;
+        }
+        pipe2_run_ = false;
+        pipe0_run_ = false;
+    }
+
+    if (video_thread2 && video_thread2->joinable()) video_thread2->join();
+    if (video_thread2 && video_thread0->joinable()) video_thread0->join();
+
+    LOG_DEBUG("Video pipe 0 stopped\n");
+}
+
+void Video::video_pipe0_restart() {
+    video_pipe0_stop();
+    video_pipe0_start();
+    LOG_DEBUG("Video pipe 0 restarted\n");
+}
+
+void Video::video_pipe1_start() {
+    {
+        std::lock_guard<std::mutex> lock(mtx_video);
+        if (pipe1_run_) {
+            LOG_ERROR("Video pipe 1 already started\n");
+            return;
+        }
+        pipe1_run_ = true;
+    }
+
+    video_thread1 = std::make_unique<std::thread>(&Video::video_pipe1, this);
+
+    LOG_DEBUG("Video pipe 1 started\n");
+}
+
+void Video::video_pipe1_stop() {
+    {
+        std::lock_guard<std::mutex> lock(mtx_video);
+        if (!pipe1_run_) {
+            LOG_ERROR("Video pipe 1 already stopped\n");
+            return;
+        }
+        pipe1_run_ = false;
+    }
+
+    if (video_thread1 && video_thread1->joinable()) video_thread1->join();
+
+    LOG_DEBUG("Video pipe 1 stopped\n");
+}
+
+void Video::video_pipe1_restart() {
+    video_pipe1_stop();
+    video_pipe1_start();
+    LOG_DEBUG("Video pipe 1 restarted\n");
+}
+
+void Video::video_pipe2_start() {
+    {
+        // 线程2依赖线程0
+        std::lock_guard<std::mutex> lock(mtx_video);
+        int ai_enable = rk_param_get_int("ai:enable", 0);
+        // 若ai未使能或者线程2已经启动或者线程1未启动则直接返回
+        if (!ai_enable) {
+            LOG_ERROR("AI is disabled\n");
+            return;
+        }
+        if (pipe2_run_) {
+            LOG_ERROR("Video pipe 2 already started\n");
+            return;
+        }
+        if (!pipe0_run_) {
+            LOG_ERROR("Video pipe 0 not started\n");
+            return;
+        }
+        pipe2_run_ = true;  // 设置运行标志位
+        video_thread2 = std::make_unique<std::thread>(&Video::video_pipe2, this);
+    }
+
+    LOG_DEBUG("Video pipe 2 started\n");
+}
+
+void Video::video_pipe2_stop() {
+    {
+        // 线程2依赖线程0
+        std::lock_guard<std::mutex> lock(mtx_video);
+        if (!pipe2_run_) {
+            LOG_ERROR("Video pipe 2 already stopped\n");
+            return;
+        }
+        pipe2_run_ = false;
+    }
+
+    if (video_thread2 && video_thread2->joinable()) video_thread2->join();
+
+    LOG_DEBUG("Video pipe 2 stopped\n");
+}
+
+void Video::video_pipe2_restart() {
+    video_pipe2_stop();
+    video_pipe2_start();
+    LOG_DEBUG("Video pipe 2 restarted\n");
 }

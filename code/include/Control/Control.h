@@ -18,8 +18,8 @@ enum ModuleID {
     ID_UNKNOWN = 0,
     ID_LED,
     ID_PANTILT,
-    ID_VIDEO,
-    ID_DISPLAY
+    ID_DISPLAY,
+    ID_VIDEO
 };
 
 enum LEDOpcode {
@@ -49,6 +49,16 @@ enum DisplayOpcode {
     OP_DISPLAY_PAUSE = 0,
     OP_DISPLAY_RESUME,
     OP_DISPLAY_MAX
+};
+
+enum VideoOpcode {
+    OP_VIDEO_PIPE0_START = 0,
+    OP_VIDEO_PIPE0_STOP,
+    OP_VIDEO_PIPE0_RESTART,
+    OP_VIDEO_PIPE1_START,
+    OP_VIDEO_PIPE1_STOP,
+    OP_VIDEO_PIPE1_RESTART,
+    OP_VIDEO_MAX
 };
 
 class Control {
