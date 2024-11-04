@@ -72,26 +72,30 @@ Network::~Network() {
  * @brief Network 类运行线程。
  */
 void Network::run() {
-    connect_to_server();
-    receive_thread = std::thread(&Network::receive_thread_func, this);
-    send_thread = std::thread(&Network::send_thread_func, this);
-    ntp_enabled = rk_param_get_int("network.ntp_enabled", 1);
+    // connect_to_server();
+    // receive_thread = std::thread(&Network::receive_thread_func, this);
+    // send_thread = std::thread(&Network::send_thread_func, this);
+    ntp_enabled = rk_param_get_int("network.ntp:enable", 0);
+    LOG_DEBUG("NTP enable: %d\n", ntp_enabled);
     if (ntp_enabled) {
         ntp_thread = std::thread(&Network::ntp_thread_func, this);
     }
 
+    sockfd = -1;
     while (network_run_) {
         if (!is_connected_) {  // 如果服务器关闭
-            cond_var_send.notify_all();
             LOG_DEBUG("Server disconnected, reconnecting...\n");
 
             if (sockfd > 0) close(sockfd);          // 关闭连接
             sockfd = -1;
 
+            connect_to_server();
+
+            if (!network_run_) break;
+
             if (receive_thread.joinable()) receive_thread.join();
             if (send_thread.joinable()) send_thread.join();
 
-            connect_to_server();
             receive_thread = std::thread(&Network::receive_thread_func, this);
             send_thread = std::thread(&Network::send_thread_func, this);
         } else {
@@ -248,14 +252,14 @@ void Network::ntp_thread_func() {
     int refresh_time_s = rk_param_get_int("network.ntp:refresh_time_s", 60);
 	const char *ntp_server = rk_param_get_string("network.ntp:ntp_server", "119.28.183.184");
 	LOG_DEBUG("refresh_time_s is %d, ntp_server is %s\n", refresh_time_s, ntp_server);
-    rkipc_ntp_update(ntp_server);
+    // rkipc_ntp_update(ntp_server);
 
     while (network_run_) {
         // 每隔 60 秒发送一次 NTP 请求
         std::unique_lock<std::mutex> lock(mtx_ntp);
         cond_var_ntp.wait_for(lock, std::chrono::seconds(refresh_time_s), [this] { return !network_run_; });
 
-        rkipc_ntp_update(ntp_server);
+        // rkipc_ntp_update(ntp_server);
     }
 
     LOG_DEBUG("NTP thread exited\n");

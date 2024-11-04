@@ -8,18 +8,18 @@ Video::Video()
     pipe1_run_ = true;
     pipe2_run_ = true;
 
-    // rkaiq_init();
-    // rkmpi_sys_init();
-    // vi_dev_init();
-    // rtsp_init();
+    rkaiq_init();
+    rkmpi_sys_init();
+    vi_dev_init();
+    rtsp_init();
 
-    // video_thread0 = std::make_unique<std::thread>(&Video::video_pipe0, this);
-    // video_thread1 = std::make_unique<std::thread>(&Video::video_pipe1, this);
+    video_thread0 = std::make_unique<std::thread>(&Video::video_pipe0, this);
+    video_thread1 = std::make_unique<std::thread>(&Video::video_pipe1, this);
     
-    // int ai_enable = rk_param_get_int("ai:enable", 0);
-    // if (ai_enable) {
-    //     video_thread2 = std::make_unique<std::thread>(&Video::video_pipe2, this);
-    // }
+    int ai_enable = rk_param_get_int("ai:enable", 0);
+    if (ai_enable) {
+        video_thread2 = std::make_unique<std::thread>(&Video::video_pipe2, this);
+    }
 }
 
 Video::~Video()
@@ -29,14 +29,14 @@ Video::~Video()
         video_run_ = false;
     }
 
-    // if (video_thread0 && video_thread0->joinable()) video_thread0->join();
-    // if (video_thread0 && video_thread1->joinable()) video_thread1->join();
-    // if (video_thread0 && video_thread2->joinable()) video_thread2->join();
+    if (video_thread0 && video_thread0->joinable()) video_thread0->join();
+    if (video_thread0 && video_thread1->joinable()) video_thread1->join();
+    if (video_thread0 && video_thread2->joinable()) video_thread2->join();
 
-    // rtsp_deinit();
-    // vi_dev_deinit();
-    // rkmpi_sys_deinit();
-    // rkaiq_deinit();
+    rtsp_deinit();
+    vi_dev_deinit();
+    rkmpi_sys_deinit();
+    rkaiq_deinit();
 
     LOG_DEBUG("Video deinitialized\n");
 }
@@ -75,7 +75,8 @@ void Video::video_pipe0()
 
     rkipc_osd_deinit();
 
-    usleep(500 * 1000);
+    // wait for ai rgn to deinit
+    // usleep(500 * 1000);
     unbind_vi_to_venc(pipeId, &vi_chn, &venc_chn);
     venc_deinit(vencChannelId);
     vi_chn_deinit(pipeId, viChannelId);

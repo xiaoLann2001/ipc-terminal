@@ -12,7 +12,7 @@
 #define LED_ENABLE 1
 #define PANTILT_ENABLE 1
 #define DISPLAY_ENABLE 1
-#define VIDEO_ENABLE 0
+#define VIDEO_ENABLE 1
 
 int rkipc_log_level = LOG_LEVEL_DEBUG;
 char ini_path[] = "ipc-terminal.ini";
@@ -125,6 +125,8 @@ int main(int argc, char *argv[]) {
     }
 
     rk_param_deinit();
+
+    LOG_INFO("Program exited\n");
 
     return 0;
 }

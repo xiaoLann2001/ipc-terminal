@@ -34,7 +34,7 @@
 
 #define NTP_PORT 123
 
-#define TIMEOUT 10
+#define TIMEOUT 1
 
 #define BUFSIZE 1500
 

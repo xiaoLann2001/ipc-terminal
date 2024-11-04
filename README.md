@@ -3,4 +3,4 @@
 
 ### 本工程是网络摄像头摄像头端的板端软件ipc-terminal
 
-### 远程监控将由ipc-terminal、ipc-server、ipc-client三端组成
+### 视频监控将由ipc-terminal、ipc-server、ipc-client三端组成
