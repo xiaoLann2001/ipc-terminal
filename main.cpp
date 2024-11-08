@@ -57,10 +57,10 @@ int main(int argc, char *argv[]) {
     // Pantilt 模块初始化
     LOG_DEBUG("Pantilt module initializing\n");
     Pantilt *pantilt = new Pantilt();
-    control->registerControlFunction(ID_PANTILT, OP_PANTILT_UP, std::bind(&Pantilt::up, pantilt));
-    control->registerControlFunction(ID_PANTILT, OP_PANTILT_DOWN, std::bind(&Pantilt::down, pantilt));
-    control->registerControlFunction(ID_PANTILT, OP_PANTILT_LEFT, std::bind(&Pantilt::left, pantilt));
-    control->registerControlFunction(ID_PANTILT, OP_PANTILT_RIGHT, std::bind(&Pantilt::right, pantilt));
+    control->registerControlFunction(ID_PANTILT, OP_PANTILT_UP, std::bind(&Pantilt::up, pantilt, std::placeholders::_1));
+    control->registerControlFunction(ID_PANTILT, OP_PANTILT_DOWN, std::bind(&Pantilt::down, pantilt, std::placeholders::_1));
+    control->registerControlFunction(ID_PANTILT, OP_PANTILT_LEFT, std::bind(&Pantilt::left, pantilt, std::placeholders::_1));
+    control->registerControlFunction(ID_PANTILT, OP_PANTILT_RIGHT, std::bind(&Pantilt::right, pantilt, std::placeholders::_1));
     control->registerControlFunction(ID_PANTILT, OP_PANTILT_RESET, std::bind(&Pantilt::reset, pantilt));
 #endif
 #if DISPLAY_ENABLE
@@ -83,6 +83,9 @@ int main(int argc, char *argv[]) {
 #endif
 #if VIDEO_ENABLE && DISPLAY_ENABLE
     video->signal_video_frame.connect(display, &Display::push_frame);
+#endif
+#if VIDEO_ENABLE && PANTILT_ENABLE
+    video->signal_adjust_pantilt.connect(pantilt, &Pantilt::onAjustPantilt);
 #endif
 
     while (!quit) {

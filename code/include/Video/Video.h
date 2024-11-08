@@ -27,6 +27,7 @@ public:
     ~Video();
 
     Signal<cv::Mat> signal_video_frame;
+    Signal<int, int> signal_adjust_pantilt;
 
     void video_pipe0_start();
     void video_pipe0_stop();

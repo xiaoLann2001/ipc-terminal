@@ -76,7 +76,7 @@ void Video::video_pipe0()
     rkipc_osd_deinit();
 
     // wait for ai rgn to deinit
-    // usleep(500 * 1000);
+    usleep(500 * 1000);
     unbind_vi_to_venc(pipeId, &vi_chn, &venc_chn);
     venc_deinit(vencChannelId);
     vi_chn_deinit(pipeId, viChannelId);
@@ -211,6 +211,43 @@ void Video::video_pipe2()
             detect_classes.insert(16);
         }
 
+        int ai_follow_enable = rk_param_get_int("ai.follow:enable", 0);
+        int ai_follow_people = rk_param_get_int("ai.follow:people_follow", 0);
+        int ai_follow_vehicle = rk_param_get_int("ai.follow:vehicle_follow", 0);
+        int ai_follow_pet = rk_param_get_int("ai.follow:pet_follow", 0);
+        int ai_follow_tolerance_width = rk_param_get_int("ai.follow:tolerance_width", 100);
+        int ai_follow_tolerance_height = rk_param_get_int("ai.follow:tolerance_height", 100);
+        int ai_follow_roi_x = rk_param_get_int("ai.follow:roi_x", 0);
+        int ai_follow_roi_y = rk_param_get_int("ai.follow:roi_y", 0);
+        int ai_follow_roi_width = rk_param_get_int("ai.follow:roi_width", 2304);
+        int ai_follow_roi_height = rk_param_get_int("ai.follow:roi_height", 1296);
+
+        // follow classes set
+        std::unordered_set<int> follow_classes;
+        if (ai_follow_enable) {
+            // 只能选择跟随一个目标，从前往后优先级递减
+            if (ai_follow_people) {
+                follow_classes.insert(0);
+            } else if (ai_follow_vehicle) {
+                follow_classes.insert(1);
+                follow_classes.insert(2);
+                follow_classes.insert(3);
+                follow_classes.insert(4);
+                follow_classes.insert(5);
+                follow_classes.insert(7);
+                follow_classes.insert(8);
+            } else if (ai_follow_pet) {
+                follow_classes.insert(15);
+                follow_classes.insert(16);
+            }
+        }
+
+        // follow target info
+        bool is_follow_target_detected;
+        int follow_sX, follow_sY, follow_eX, follow_eY;
+        int follow_sX_last, follow_sY_last, follow_eX_last, follow_eY_last;
+        float follow_target_prop;
+
         // Rknn model
         int sX, sY, eX, eY;
         char text[16];
@@ -237,11 +274,14 @@ void Video::video_pipe2()
         int pipeId = 0;
         int viChannelId = 2;
         int vencChannelId = 2;
-        int video_width = 640;
-        int video_height = 640;
+        // int video_width = 640;
+        // int video_height = 640;
+        int video_width = MODEL_WIDTH;
+        int video_height = MODEL_HEIGHT;
         int rgn_video_width = 2304;
         int rgn_video_height = 1296;
 
+        // video frame container
         VIDEO_FRAME_INFO_S stViFrame;
         cv::Mat yuv420sp(video_height + video_height / 2, video_width, CV_8UC1);
         cv::Mat bgr(video_height, video_width, CV_8UC3);
@@ -254,54 +294,164 @@ void Video::video_pipe2()
             // get vi frame
             yuv420sp.data = (unsigned char *)vi_get_frame(pipeId, viChannelId, video_width, video_height, &stViFrame);
             cv::cvtColor(yuv420sp, bgr, cv::COLOR_YUV420sp2BGR);
-            cv::resize(bgr, bgr, cv::Size(video_width, video_height), 0, 0, cv::INTER_LINEAR);
+            // cv::resize(bgr, bgr, cv::Size(video_width, video_height), 0, 0, cv::INTER_LINEAR);
 
             // letterbox
             cv::Mat letterboxImage = letterbox(bgr, video_width, video_height);
             memcpy(rknn_app_ctx.input_mems[0]->virt_addr, letterboxImage.data, MODEL_HEIGHT * MODEL_HEIGHT * 3);
 
+            // inference
             inference_yolov5_model(&rknn_app_ctx, &od_results);
 
             // draw osd
             std::vector<RgnDrawParams> tasks(20);
             // printf("od_results.count: %d\n", od_results.count);
+
+            // init follow target info
+            if (ai_follow_enable && follow_classes.size() > 0)
+            {
+                is_follow_target_detected = false;
+                follow_sX = 0;
+                follow_sY = 0;
+                follow_eX = 0;
+                follow_eY = 0;
+                follow_sX_last = 0;
+                follow_sY_last = 0;
+                follow_eX_last = 0;
+                follow_eY_last = 0;
+                follow_target_prop = 0;
+            }
+
             for (int i = 0; i < od_results.count; i++)
             {
                 if (od_results.count >= 1)
                 {
                     object_detect_result *det_result = &(od_results.results[i]);
 
-                    if (detect_classes.count(det_result->cls_id) == 0) continue;
-                    
-                    // if (det_result->cls_id > 8) continue;
+                    if (detect_classes.count(det_result->cls_id) > 0)
+                    {
+                        // if (det_result->cls_id > 8) continue;
 
-                    sX = (int)(det_result->box.left);
-                    sY = (int)(det_result->box.top);
-                    eX = (int)(det_result->box.right);
-                    eY = (int)(det_result->box.bottom);
-                    mapCoordinates(&sX, &sY);
-                    mapCoordinates(&eX, &eY);
-                    sX = (int)((float)sX / (float)video_width * rgn_video_width);
-                    sY = (int)((float)sY / (float)video_height * rgn_video_height);
-                    eX = (int)((float)eX / (float)video_width * rgn_video_width);
-                    eY = (int)((float)eY / (float)video_height * rgn_video_height);
-                    // printf("%s @ (%d %d %d %d) %.3f\n", coco_cls_to_name(det_result->cls_id),
-                    //        sX, sY, eX, eY, det_result->prop);
+                        sX = (int)(det_result->box.left);
+                        sY = (int)(det_result->box.top);
+                        eX = (int)(det_result->box.right);
+                        eY = (int)(det_result->box.bottom);
+                        mapCoordinates(&sX, &sY);
+                        mapCoordinates(&eX, &eY);
+                        sX = (int)((float)sX / (float)video_width * rgn_video_width);
+                        sY = (int)((float)sY / (float)video_height * rgn_video_height);
+                        eX = (int)((float)eX / (float)video_width * rgn_video_width);
+                        eY = (int)((float)eY / (float)video_height * rgn_video_height);
+                        // printf("%s @ (%d %d %d %d) %.3f\n", coco_cls_to_name(det_result->cls_id),
+                        //        sX, sY, eX, eY, det_result->prop);
 
-                    RgnDrawParams task;
-                    task.RgnHandle = RgnHandle;
-                    task.x = sX;
-                    task.y = sY;
-                    task.w = eX - sX;
-                    task.h = eY - sY;
-                    task.line_pixel = line_pixel;
-                    tasks.push_back(task);
+                        RgnDrawParams task;
+                        task.RgnHandle = RgnHandle;
+                        task.x = sX;
+                        task.y = sY;
+                        task.w = eX - sX;
+                        task.h = eY - sY;
+                        task.line_pixel = line_pixel;
+                        tasks.push_back(task);
+                    }
 
+                    // 更新跟随目标坐标，若有多个目标则选择置信度最高的目标，
+                    // 若置信度相差不超过 0.1 则选择最靠近中心的目标
+                    if (ai_follow_enable && follow_classes.count(det_result->cls_id) > 0)
+                    {
+                        is_follow_target_detected = true;   // 用于判断是否检测到跟随目标
+
+                        bool update_target = false;  // 用于判断是否需要更新跟随目标
+
+                        if (follow_sX == 0 && follow_sY == 0 && follow_eX == 0 && follow_eY == 0)
+                        {
+                            // 初始化跟随目标
+                            update_target = true;
+                        }
+                        else
+                        {
+                            // 计算当前目标与视频中心的偏移
+                            int delta_x = (sX + eX) / 2 - rgn_video_width / 2;
+                            int delta_y = (sY + eY) / 2 - rgn_video_height / 2;
+                            
+                            // 计算上一个目标与视频中心的偏移
+                            int delta_last_x = (follow_sX_last + follow_eX_last) / 2 - rgn_video_width / 2;
+                            int delta_last_y = (follow_sY_last + follow_eY_last) / 2 - rgn_video_height / 2;
+
+                            // 如果当前目标的置信度大于 0.5，或者当前目标的置信度明显大于上一个目标的置信度
+                            if (det_result->prop > 0.5 || det_result->prop - follow_target_prop > 0.1)
+                            {
+                                update_target = true;
+                            }
+                            else
+                            {
+                                // 如果当前目标比上一个目标距离中心距离更近，选择当前目标
+                                if (abs(delta_x) < abs(delta_last_x) && abs(delta_y) < abs(delta_last_y))
+                                {
+                                    update_target = true;
+                                }
+                            }
+                        }
+
+                        // 如果决定更新目标，则更新目标的坐标和置信度
+                        if (update_target)
+                        {
+                            follow_sX = sX;
+                            follow_sY = sY;
+                            follow_eX = eX;
+                            follow_eY = eY;
+                        }
+
+                        // 保存当前目标的坐标和置信度
+                        follow_sX_last = sX;
+                        follow_eX_last = eX;
+                        follow_sY_last = sY;
+                        follow_eY_last = eY;
+                        follow_target_prop = det_result->prop;
+                    }
                 }
             }
             rgn_add_draw_tasks_batch(tasks);
 
             vi_release_frame(pipeId, viChannelId, &stViFrame);
+
+            if (ai_follow_enable && is_follow_target_detected)
+            {
+                // 计算目标中心位置与图像中心的偏移量
+                int cx = (follow_sX + follow_eX) / 2;
+                int cy = (follow_sY + follow_eY) / 2;
+
+                // 若不在感兴趣区域内则不跟随
+                if (cx < ai_follow_roi_x || cx > ai_follow_roi_x + ai_follow_roi_width ||
+                    cy < ai_follow_roi_y || cy > ai_follow_roi_y + ai_follow_roi_height)
+                {
+                    continue;
+                }
+
+                int delta_x = cx - rgn_video_width / 2;
+                int delta_y = cy - rgn_video_height / 2;
+
+                // 设置容忍范围，若偏移量在容忍范围内则不调整云台
+                if (abs(delta_x) < ai_follow_tolerance_width && abs(delta_y) < ai_follow_tolerance_height)
+                {
+                    continue;
+                }
+
+                // LOG_DEBUG("follow target: (%d, %d, %d, %d)\n", follow_sX, follow_sY, follow_eX, follow_eY);
+                // LOG_DEBUG("cx: %d, cy: %d\n", cx, cy);
+                // LOG_DEBUG("delta_x: %d, delta_y: %d\n", delta_x, delta_y);
+
+                // 根据偏移量计算云台需要调整的角度，基于画幅 左右 90°，俯仰 45°，加上系数微调
+                float pan_coefficient = 0.3;
+                float tilt_coefficient = 0.3;
+                int delta_pan = (int)(pan_coefficient * (float)delta_x / (float)rgn_video_width * 90);
+                int delta_tilt = (int)(tilt_coefficient * (float)delta_y / (float)rgn_video_height * 45);
+
+                // LOG_DEBUG("delta_pan: %d, delta_tilt: %d\n", delta_pan, delta_tilt);
+
+                // 发射信号来调整云台位置
+                signal_adjust_pantilt.emit(delta_pan, delta_tilt);  // 传递偏移量给舵机控制类
+            }
         }
 
         rgn_draw_nn_deinit();
