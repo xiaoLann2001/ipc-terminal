@@ -20,7 +20,7 @@ Pantilt::Pantilt() {
     preset_pan = rk_param_get_int("ptz:preset_pan", 0);  // 读取俯仰预置点
     preset_tilt = rk_param_get_int("ptz:preset_tilt", 0);  // 读取旋转预置点
     preset_home_enable = rk_param_get_int("ptz:preset_home_enable", 0);  // 读取回位使能
-    preset_home_time = rk_param_get_int("ptz:preset_home_time", 0);  // 读取回位时间
+    preset_home_time = rk_param_get_int("ptz:preset_home_time", 30);  // 读取回位时间
 
     if (preset_pan < left_limit || preset_pan > right_limit) {
         preset_pan = 0;
@@ -35,8 +35,10 @@ Pantilt::Pantilt() {
     reset();  // 初始化舵机角度
 
     // 启动归位检查线程
-    home_position_thread_run = true;
-    home_position_thread = std::thread(&Pantilt::homePositionCheck, this);
+    if (preset_home_enable) {
+        home_position_thread_run = true;
+        home_position_thread = std::thread(&Pantilt::homePositionCheck, this);
+    }
 }
 
 /**
@@ -152,6 +154,8 @@ void Pantilt::onAjustPantilt(int delta_pan, int delta_tilt) {
  * @brief 复位舵机。
  */
 void Pantilt::reset() {
+    // LOG_DEBUG("reset\n");
+
     setPan(preset_pan);
     setTilt(preset_tilt);
 
@@ -276,11 +280,14 @@ void Pantilt::homePositionCheck() {
         // 若有操作，重置 has_operation 标志
         if (has_operation) {
             has_operation = false;
+            // LOG_DEBUG("has operation\n");
             continue;
         }
 
         // 如果不在归位位置，执行归位操作
         if (pan_angle != preset_pan || tilt_angle != preset_tilt) {
+            // LOG_DEBUG("pan_angle: %d, tilt_angle: %d\n", pan_angle, tilt_angle);
+            // LOG_DEBUG("preset_pan: %d, preset_tilt: %d\n", preset_pan, preset_tilt);
             reset();  // 执行归位  
         }
     }

@@ -280,6 +280,7 @@ void Video::video_pipe2()
         int video_height = MODEL_HEIGHT;
         int rgn_video_width = 2304;
         int rgn_video_height = 1296;
+        int rgn_square_size = rgn_video_width * rgn_video_height;
 
         // video frame container
         VIDEO_FRAME_INFO_S stViFrame;
@@ -373,23 +374,27 @@ void Video::video_pipe2()
                             // 计算当前目标与视频中心的偏移
                             int delta_x = (sX + eX) / 2 - rgn_video_width / 2;
                             int delta_y = (sY + eY) / 2 - rgn_video_height / 2;
-                            
                             // 计算上一个目标与视频中心的偏移
                             int delta_last_x = (follow_sX_last + follow_eX_last) / 2 - rgn_video_width / 2;
                             int delta_last_y = (follow_sY_last + follow_eY_last) / 2 - rgn_video_height / 2;
 
-                            // 如果当前目标的置信度大于 0.5，或者当前目标的置信度明显大于上一个目标的置信度
-                            if (det_result->prop > 0.5 || det_result->prop - follow_target_prop > 0.1)
+                            // 计算当前目标的面积
+                            int target_area = (eX - sX) * (eY - sY);
+                            // 计算上一个目标的面积
+                            int last_target_area = (follow_eX_last - follow_sX_last) * (follow_eY_last - follow_sY_last);
+
+                            // 权衡置信度和面积，计算得分
+                            float square_coefficient = 0.6;
+                            float score = det_result->prop + square_coefficient * (float)target_area / (float)rgn_square_size;
+                            float last_score = follow_target_prop + square_coefficient * (float)last_target_area/ (float)rgn_square_size;
+
+                            // LOG_DEBUG("target_prop: %.3f, target_area: %d, score: %.3f\n", det_result->prop, target_area, score);
+                            // LOG_DEBUG("last_target_prop: %.3f, last_target_area: %d, last_score: %.3f\n", follow_target_prop, last_target_area, last_score);
+
+                            // 如果当前目标的得分更高，选择当前目标
+                            if (score > last_score)
                             {
                                 update_target = true;
-                            }
-                            else
-                            {
-                                // 如果当前目标比上一个目标距离中心距离更近，选择当前目标
-                                if (abs(delta_x) < abs(delta_last_x) && abs(delta_y) < abs(delta_last_y))
-                                {
-                                    update_target = true;
-                                }
                             }
                         }
 
@@ -400,14 +405,14 @@ void Video::video_pipe2()
                             follow_sY = sY;
                             follow_eX = eX;
                             follow_eY = eY;
-                        }
 
-                        // 保存当前目标的坐标和置信度
-                        follow_sX_last = sX;
-                        follow_eX_last = eX;
-                        follow_sY_last = sY;
-                        follow_eY_last = eY;
-                        follow_target_prop = det_result->prop;
+                            // 保存当前目标的坐标和置信度
+                            follow_sX_last = sX;
+                            follow_eX_last = eX;
+                            follow_sY_last = sY;
+                            follow_eY_last = eY;
+                            follow_target_prop = det_result->prop;
+                        }
                     }
                 }
             }
