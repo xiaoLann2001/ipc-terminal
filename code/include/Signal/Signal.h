@@ -102,7 +102,7 @@ public:
         }
     }
 
-    // 连接普通函数或成员函数
+    // 连接成员函数
     template <typename T>
     void connect(T* object, void (T::*method)(Args...)) {
         auto slot = [object, method](Args... args) {
@@ -112,6 +112,17 @@ public:
         slots.push_back(std::make_shared<Slot>(slot));
     }
 
+    // 连接成员函数
+    template <typename T>
+    void connect(T* object, void (T::*method)(const Args&...)) {
+        auto slot = [object, method](Args... args) {
+            (object->*method)(args...);  // 调用成员函数
+        };
+        std::lock_guard<std::mutex> lock(mutex_);
+        slots.push_back(std::make_shared<Slot>(slot));  // 存储槽
+    }
+
+    // 连接普通函数
     void connect(Slot slot) {
         std::lock_guard<std::mutex> lock(mutex_);
         slots.push_back(std::make_shared<Slot>(std::move(slot)));
