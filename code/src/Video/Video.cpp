@@ -29,9 +29,9 @@ Video::~Video()
         video_run_ = false;
     }
 
-    if (video_thread0 && video_thread0->joinable()) video_thread0->join();
-    if (video_thread0 && video_thread1->joinable()) video_thread1->join();
     if (video_thread0 && video_thread2->joinable()) video_thread2->join();
+    if (video_thread0 && video_thread1->joinable()) video_thread1->join();
+    if (video_thread0 && video_thread0->joinable()) video_thread0->join();
 
     rtsp_deinit();
     vi_dev_deinit();
