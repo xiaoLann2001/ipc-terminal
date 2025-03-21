@@ -10,8 +10,8 @@
 #define NETWORK_ENABLE 1
 #define CONTROL_ENABLE 1
 #define LED_ENABLE 1
-#define PANTILT_ENABLE 0
-#define DISPLAY_ENABLE 0
+#define PANTILT_ENABLE 1
+#define DISPLAY_ENABLE 1
 #define VIDEO_ENABLE 1
 
 int rkipc_log_level = LOG_LEVEL_DEBUG;

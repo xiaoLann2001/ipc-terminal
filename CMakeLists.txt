@@ -1,7 +1,12 @@
 cmake_minimum_required(VERSION 3.10)
 
-# Set the SDK path and cross-compilers
-set(SDK_PATH "/home/xiaolan/luckfox-pico")
+# Read SDK_PATH from env
+if(NOT DEFINED ENV{SDK_PATH})
+    message(FATAL_ERROR "SDK_PATH 环境变量未设置！请先执行: \nexport SDK_PATH=/path/to/your/luckfox-pico")
+endif()
+
+set(SDK_PATH $ENV{SDK_PATH})
+message(STATUS "SDK_PATH is set to ${SDK_PATH}")
 
 set(CMAKE_C_COMPILER "${SDK_PATH}/tools/linux/toolchain/arm-rockchip830-linux-uclibcgnueabihf/bin/arm-rockchip830-linux-uclibcgnueabihf-gcc")
 set(CMAKE_CXX_COMPILER "${SDK_PATH}/tools/linux/toolchain/arm-rockchip830-linux-uclibcgnueabihf/bin/arm-rockchip830-linux-uclibcgnueabihf-g++")

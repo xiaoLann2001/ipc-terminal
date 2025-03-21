@@ -11,7 +11,7 @@
 #include <errno.h>
 #include <sys/select.h>
 
-#define SERVER_ADDR "192.168.5.42"
+#define SERVER_ADDR "192.168.1.1"
 #define SERVER_PORT 8888
 #define BUFFER_SIZE 1024
 #define STR_SIZE 16

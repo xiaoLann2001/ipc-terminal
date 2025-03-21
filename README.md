@@ -1,9 +1,38 @@
-### 瑞芯微RV1106平台的视频监控方案架构图
-![Alt text](瑞芯微RV1106平台的视频监控方案架构图.png)
+### 瑞芯微RV1106智能监控终端
 
-### 视频监控将由ipc-terminal、ipc-server、ipc-client三端组成
+### 视频监控将由ipc-terminal、ipc-client组成
 
 ### 本工程是网络摄像头摄像头端的板端软件ipc-terminal
+
+### 使用步骤
+1. 安装依赖环境
+```bash
+sudo apt update
+sudo apt-get install -y git ssh make gcc gcc-multilib g++-multilib module-assistant expect g++ gawk texinfo libssl-dev bison flex fakeroot cmake unzip gperf autoconf device-tree-compiler libncurses5-dev pkg-config bc python-is-python3 passwd openssl openssh-server openssh-client vim file cpio rsync
+```
+
+2. 拉取luckfox-pico官方SDK
+```bash
+git clone https://gitee.com/LuckfoxTECH/luckfox-pico.git
+```
+
+3. 拉取ipc-terminal工程
+```bash
+git clone https://github.com/xiaoLann2001/ipc-terminal.git
+```
+
+4. 编译
+```bash
+mkdir build
+cd build
+export SDK_PATH=/path/to/your/luckfox-pico
+cmake ..
+make install
+```
+
+5. 将install目录下所有文件拷贝到开发板即可
+
+6. ipc-server测试，服务器地址和端口在 net.h 中修改
 
 ### 各个模块功能支持列表：
 
