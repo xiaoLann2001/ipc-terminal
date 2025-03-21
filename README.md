@@ -30,7 +30,7 @@ cmake ..
 make install
 ```
 
-5. 将install目录下所有文件拷贝到开发板即可
+5. 将install目录下所有文件拷贝到开发板即可，ipc-terminal.ini 中可以修改软件参数，使能/关闭软件功能，每次运行前修改
 
 6. ipc-server测试，服务器地址和端口在 net.h 中修改
 
