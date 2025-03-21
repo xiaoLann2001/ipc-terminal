@@ -4,6 +4,29 @@
 
 ### 本工程是网络摄像头摄像头端的板端软件ipc-terminal
 
+### 连线，luckfox-pico-max 开发板
+
+![Alt text](luckfox-pico-max.png)
+
+实物图：
+
+![Alt text](实物图.jpg)
+
+摄像头使用的 sc3336，固定于舵机云台上。
+
+如果使用官方支持的屏幕，在开发板命令行输入 luckfox-config，再使能对应外设即可。
+
+我的屏幕使用的st7735s 1.8寸屏幕，官方SDK中有驱动，但需要自己配置 tbtft 设备节点，参考大佬教程：
+
+https://blog.csdn.net/qq_46205054/article/details/142266317
+
+使用 pwm 需要进入板子系统，使能 pwm8 pwm9 字符设备驱动
+```bash
+luckfox-config
+```
+
+![Alt text](luckfox-config-pwm89.png)
+
 ### 使用步骤
 1. 安装依赖环境
 ```bash

@@ -11,7 +11,7 @@ Pantilt::Pantilt() {
     pwm_set_polarity(PWM8_M1, "normal");  // 设置 PWM8 输出极性为正常
     // pwm_enable(PWM8_M1, 1);  // 启用 PWM8
 
-    pwm_init(PWM9_M1);  // 用于控制旋转的360°舵机
+    pwm_init(PWM9_M1);  // 用于控制旋转的180°舵机
     pwm_set_period(PWM9_M1, 20000000);  // 设置 PWM9 周期为 20ms
     pwm_set_duty_cycle(PWM9_M1, 1500000);  // 设置 PWM9 初始占空比为 1.5ms
     pwm_set_polarity(PWM9_M1, "normal");  // 设置 PWM9 输出极性为正常
