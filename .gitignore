@@ -4,3 +4,6 @@
 # Generated directories
 build/
 install/
+
+# server test
+ipc-server-simple/
