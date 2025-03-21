@@ -97,6 +97,11 @@
         "pantilt.h": "c",
         "unordered_set": "cpp",
         "iconv.h": "c",
-        "stdlib.h": "c"
+        "stdlib.h": "c",
+        "compare": "cpp",
+        "concepts": "cpp",
+        "numbers": "cpp",
+        "semaphore": "cpp",
+        "stop_token": "cpp"
     }
 }

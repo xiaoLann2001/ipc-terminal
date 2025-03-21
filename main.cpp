@@ -10,8 +10,8 @@
 #define NETWORK_ENABLE 1
 #define CONTROL_ENABLE 1
 #define LED_ENABLE 1
-#define PANTILT_ENABLE 1
-#define DISPLAY_ENABLE 1
+#define PANTILT_ENABLE 0
+#define DISPLAY_ENABLE 0
 #define VIDEO_ENABLE 1
 
 int rkipc_log_level = LOG_LEVEL_DEBUG;
@@ -73,6 +73,7 @@ int main(int argc, char *argv[]) {
 #if VIDEO_ENABLE
     // 视频类初始化
     LOG_DEBUG("Video module initializing\n");
+    system("RkLunch-stop.sh");
     Video *video = new Video();
     control->registerControlFunction(ID_VIDEO, OP_VIDEO_PIPE0_START, std::bind(&Video::video_pipe0_start, video));
     control->registerControlFunction(ID_VIDEO, OP_VIDEO_PIPE0_STOP, std::bind(&Video::video_pipe0_stop, video));

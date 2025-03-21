@@ -23,7 +23,7 @@ find_package(Threads REQUIRED)
 
 # Add subdirectories for third-party and source code
 link_directories(${CMAKE_CURRENT_SOURCE_DIR}/lib)
-# link_directories(${CMAKE_CURRENT_SOURCE_DIR}/lib/arm-rockchip830-linux-uclibcgnueabihf)
+link_directories(${CMAKE_CURRENT_SOURCE_DIR}/lib/arm-rockchip830-linux-uclibcgnueabihf)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ 3rdparty.out)
 # add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/code/src)
 
@@ -136,10 +136,4 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/code/model/ DESTINATION ${CMAKE_IN
 
 # Install configuration files
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/code/ipc-terminal.ini DESTINATION ${CMAKE_INSTALL_PREFIX})
-
-# Install dynamic libraries
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib/
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-        FILES_MATCHING PATTERN "*.so*"
-)
 
