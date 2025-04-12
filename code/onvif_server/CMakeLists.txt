@@ -2,29 +2,31 @@
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -DWITH_NO_C_LOCALE")
 
 # 包含头文件路径
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/common)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/interface)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/server)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/soap)
 
 # 源文件列表
 set(SOURCES
     # soap生成的文件
-    soapC.c
-    soapServer.c
-    soapClient.c
-    stdsoap2.c
+    soap/soapC.c
+    soap/soapServer.c
+    soap/soapClient.c
+    soap/stdsoap2.c
 
     # 服务器代码
-    onvif_server.c
-    onvif_server_interface.c
-
+    server/onvif_server.c
+    
     # ONVIF服务实现
-    service_device.c
-    service_media.c
-    service_ptz.c
-    service_event.c
+    interface/onvif_server_interface.c
+    interface/service_device.c
+    interface/service_media.c
+    interface/service_ptz.c
+    interface/service_event.c
 
     # 工具函数
-    utils.c
+    common/utils.c
 )
 
 # 生成动态库（SHARED 表示生成 .so）
