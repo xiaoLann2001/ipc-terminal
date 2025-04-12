@@ -10,5 +10,9 @@
 #define LARGE_INFO_LENGTH 1024
 #define SMALL_INFO_LENGTH 512
 
+// Media
+#define MAX_MEDIA_PROFILE_NUM  2
+#define MAIN_STREAM_PATH      "live/0"
+#define SUB_STREAM_PATH       "live/1"
 
 #endif // __ONVIF_CONFIG_H__
