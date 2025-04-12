@@ -49,6 +49,7 @@ set(APP_CXXFILE ${CMAKE_CURRENT_SOURCE_DIR}/code/app/main.cpp)
 set(COMMON_DIR ${CMAKE_CURRENT_SOURCE_DIR}/code/common)
 set(MODULES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/code/modules)
 set(ONVIF_SERVER_DIR ${CMAKE_CURRENT_SOURCE_DIR}/code/onvif_server)
+
 file(GLOB SRC_FILES 
     ${APP_CXXFILE}
     
@@ -141,20 +142,21 @@ target_include_directories(${PROJECT_NAME} PUBLIC
     
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/rknpu2/include
 
-    ${CMAKE_CURRENT_SOURCE_DIR}/code/common
-    ${CMAKE_CURRENT_SOURCE_DIR}/code/common/log
-    ${CMAKE_CURRENT_SOURCE_DIR}/code/common/param
-    ${CMAKE_CURRENT_SOURCE_DIR}/code/common/signal
+    ${COMMON_DIR}
+    ${COMMON_DIR}/log
+    ${COMMON_DIR}/param
+    ${COMMON_DIR}/signal
+    ${COMMON_DIR}/utils
     
-    ${CMAKE_CURRENT_SOURCE_DIR}/code/modules/Control
-    ${CMAKE_CURRENT_SOURCE_DIR}/code/modules/Display
-    ${CMAKE_CURRENT_SOURCE_DIR}/code/modules/Led
-    ${CMAKE_CURRENT_SOURCE_DIR}/code/modules/Network
-    ${CMAKE_CURRENT_SOURCE_DIR}/code/modules/Pantilt
-    ${CMAKE_CURRENT_SOURCE_DIR}/code/modules/Video
-    ${CMAKE_CURRENT_SOURCE_DIR}/code/modules/Video/osd
+    ${MODULES_DIR}/Control
+    ${MODULES_DIR}/Display
+    ${MODULES_DIR}/Led
+    ${MODULES_DIR}/Network
+    ${MODULES_DIR}/Pantilt
+    ${MODULES_DIR}/Video
+    ${MODULES_DIR}/Video/osd
 
-    ${CMAKE_CURRENT_SOURCE_DIR}/code/onvif_server/server
+    ${ONVIF_SERVER_DIR}/server
 )
 
 # =============================================================================

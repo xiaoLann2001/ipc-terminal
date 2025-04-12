@@ -1,8 +1,7 @@
 #include "soapH.h"
 #include "soapStub.h"
 
-#include "log.h"
-#include "utils.h"
+#include "global.h"
 #include "onvif_config.h"
 
 /** Web service operation '__tds__GetServices' implementation, should return SOAP_OK or error code */

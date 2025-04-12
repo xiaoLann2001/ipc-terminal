@@ -3,6 +3,7 @@
 
 #include "log.h"
 #include "param.h"
+#include "utils.h"
 
 #ifdef __cplusplus
 

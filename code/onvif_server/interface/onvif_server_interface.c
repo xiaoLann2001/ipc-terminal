@@ -1,8 +1,7 @@
 #include "soapH.h"
 #include "soapStub.h"
 
-#include "log.h"
-#include "utils.h"
+#include "global.h"
 #include "onvif_config.h"
 
 /******************************************************************************\

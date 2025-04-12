@@ -107,7 +107,7 @@ SOAP_FMAC5 int SOAP_FMAC6 __trt__GetProfiles(struct soap* soap, struct _trt__Get
     // <Profiles>/<token>
     trt__GetProfilesResponse->Profiles[i].token = (char *)soap_malloc(soap, sizeof(char) * 32);
     memset(trt__GetProfilesResponse->Profiles[i].token, '\0', sizeof(char) * 32);
-    strcpy(trt__GetProfilesResponse->Profiles[i].token, "MediaProfile000");
+    strcpy(trt__GetProfilesResponse->Profiles[i].token, "Profile_1");
 
     // <Profiles>/<fixed>
     trt__GetProfilesResponse->Profiles[i].fixed = (enum xsd__boolean *)soap_malloc(soap, sizeof(enum xsd__boolean));
@@ -116,7 +116,7 @@ SOAP_FMAC5 int SOAP_FMAC6 __trt__GetProfiles(struct soap* soap, struct _trt__Get
     // <Profiles>/<Name>
     trt__GetProfilesResponse->Profiles[i].Name = (char *)soap_malloc(soap, sizeof(char) * 32);
     memset(trt__GetProfilesResponse->Profiles[i].Name, '\0', sizeof(char) * 32);
-    strcpy(trt__GetProfilesResponse->Profiles[i].Name, "MediaProfile_Name");
+    strcpy(trt__GetProfilesResponse->Profiles[i].Name, "mainStream");
     
     // <Profiles>/<VideoSourceConfiguration>
     trt__GetProfilesResponse->Profiles[i].VideoSourceConfiguration = (struct tt__VideoSourceConfiguration *)soap_malloc(soap,sizeof(struct tt__VideoSourceConfiguration));
