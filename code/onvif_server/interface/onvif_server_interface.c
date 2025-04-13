@@ -27,25 +27,24 @@ SOAP_FMAC5 int SOAP_FMAC6 __wsdd__Bye(struct soap* soap, struct wsdd__ByeType *w
 
 /** Web service one-way operation '__wsdd__Probe' implementation, should return value of soap_send_empty_response() to send HTTP Accept acknowledgment, or return an error code, or return SOAP_OK to immediately return without sending an HTTP response message */
 SOAP_FMAC5 int SOAP_FMAC6 __wsdd__Probe(struct soap* soap, struct wsdd__ProbeType *wsdd__Probe) {
-    // return SOAP_OK;
+	LOG_DEBUG("__wsdd__Probe");
 
-	LOG_DEBUG("__wsdd__Probe start !\n");
- 
+	// 构造 ProbeMatches
+	wsdd__ProbeMatchesType ProbeMatches;
+	ProbeMatches.ProbeMatch = soap_new_wsdd__ProbeMatchType(soap, -1);
+
+	ProbeMatches.ProbeMatch->Scopes = soap_new_wsdd__ScopesType(soap, -1);
+	ProbeMatches.ProbeMatch->wsa__EndpointReference.ReferenceProperties = soap_new_wsa__ReferencePropertiesType(soap, -1);
+	ProbeMatches.ProbeMatch->wsa__EndpointReference.ReferenceParameters = soap_new_wsa__ReferenceParametersType(soap, -1);
+	ProbeMatches.ProbeMatch->wsa__EndpointReference.ServiceName = soap_new_wsa__ServiceNameType(soap, -1);
+
+	ProbeMatches.ProbeMatch->wsa__EndpointReference.PortType = (char **)soap_malloc(soap, sizeof(char *) * SMALL_INFO_LENGTH);
+	ProbeMatches.ProbeMatch->wsa__EndpointReference.__any = (char **)soap_malloc(soap, sizeof(char*) * SMALL_INFO_LENGTH);
+
 	unsigned char macaddr[MAC_ADDR_LENGTH] = { 0 };
 	char ipaddr[IP_ADDR_LENGTH] = { 0 };
 	char _XAddr[INFO_LENGTH] = { 0 };
 	char _HwId[1024] = { 0 };
- 
-	wsdd__ProbeMatchesType ProbeMatches;
-	ProbeMatches.ProbeMatch = (struct wsdd__ProbeMatchType *)soap_malloc(soap, sizeof(struct wsdd__ProbeMatchType));
-
-	ProbeMatches.ProbeMatch->Scopes = (struct wsdd__ScopesType*)soap_malloc(soap, sizeof(struct wsdd__ScopesType));
-	ProbeMatches.ProbeMatch->wsa__EndpointReference.ReferenceProperties = (struct wsa__ReferencePropertiesType*)soap_malloc(soap, sizeof(struct wsa__ReferencePropertiesType));
-	ProbeMatches.ProbeMatch->wsa__EndpointReference.ReferenceParameters = (struct wsa__ReferenceParametersType*)soap_malloc(soap, sizeof(struct wsa__ReferenceParametersType));
-	ProbeMatches.ProbeMatch->wsa__EndpointReference.ServiceName = (struct wsa__ServiceNameType*)soap_malloc(soap, sizeof(struct wsa__ServiceNameType));
-
-	ProbeMatches.ProbeMatch->wsa__EndpointReference.PortType = (char **)soap_malloc(soap, sizeof(char *) * SMALL_INFO_LENGTH);
-	ProbeMatches.ProbeMatch->wsa__EndpointReference.__any = (char **)soap_malloc(soap, sizeof(char*) * SMALL_INFO_LENGTH);
 
 	// 获取 MAC 地址，并生成 HwId
 	if (get_local_mac("eth0", macaddr) < 0) {
@@ -61,7 +60,6 @@ SOAP_FMAC5 int SOAP_FMAC6 __wsdd__Probe(struct soap* soap, struct wsdd__ProbeTyp
 		return SOAP_ERR;
 	}
 	sprintf(_XAddr, "http://%s/onvif/device_service", ipaddr);
-	LOG_DEBUG("_XAddr ==== %s\n", _XAddr);
 
 	ProbeMatches.__sizeProbeMatch = 1;
 
@@ -82,7 +80,7 @@ SOAP_FMAC5 int SOAP_FMAC6 __wsdd__Probe(struct soap* soap, struct wsdd__ProbeTyp
 	// 填充
 	ProbeMatches.ProbeMatch->XAddrs = soap_strdup(soap, _XAddr);
 	ProbeMatches.ProbeMatch->Types = soap_strdup(soap, wsdd__Probe->Types);
-	printf("wsdd__Probe->Types=%s\n", wsdd__Probe->Types);
+	LOG_DEBUG("wsdd__Probe->Types=%s\n", wsdd__Probe->Types);
 	ProbeMatches.ProbeMatch->MetadataVersion = 1;
 
 	// 可选项初始化
@@ -110,11 +108,11 @@ SOAP_FMAC5 int SOAP_FMAC6 __wsdd__Probe(struct soap* soap, struct wsdd__ProbeTyp
 	soap->header->wsa__MessageID = soap_strdup(soap, _HwId + 4);
 
 	if (SOAP_OK == soap_send___wsdd__ProbeMatches(soap, "http://", NULL, &ProbeMatches)) {
-		printf("send ProbeMatches success !\n");
+		LOG_DEBUG("send ProbeMatches success !\n");
 		return SOAP_OK;
 	}
 
-	printf("[%d] soap error: %d, %s, %s\n", __LINE__, soap->error, *soap_faultcode(soap), *soap_faultstring(soap));
+	LOG_ERROR("soap error: %d, %s, %s\n", soap->error, *soap_faultcode(soap), *soap_faultstring(soap));
 	return soap->error;
 }
 

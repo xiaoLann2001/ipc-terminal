@@ -42,23 +42,79 @@ SOAP_FMAC5 int SOAP_FMAC6 __ns1__GetConfiguration(struct soap* soap, struct _ns1
 SOAP_FMAC5 int SOAP_FMAC6 __ns1__GetNodes(struct soap* soap, struct _ns1__GetNodes *ns1__GetNodes, struct _ns1__GetNodesResponse *ns1__GetNodesResponse) {
     LOG_DEBUG("__ns1__GetNodes");
 
-    // <PTZNode>
-    ns1__GetNodesResponse->PTZNode = soap_new___ns1__GetNodes(soap, -1);
+    // Node 个数
+    ns1__GetNodesResponse->__sizePTZNode = 1;
 
+    // <PTZNodes>
+    ns1__GetNodesResponse->PTZNode = soap_new_tt__PTZNode(soap, ns1__GetNodesResponse->__sizePTZNode);
+    for (int i = 0; i < ns1__GetNodesResponse->__sizePTZNode; i++) {
+        soap_default_tt__PTZNode(soap, &(ns1__GetNodesResponse->PTZNode[i]));
+    }
+
+    // PTZNode_1
+    int i = 0;
     // <PTZNode>/<token>
-    ns1__GetNodesResponse->PTZNode->token = soap_strdup(soap, "PTZNodeToken1");
+    ns1__GetNodesResponse->PTZNode[i].token = soap_strdup(soap, "PTZNodeToken1");
     
     // <PTZNode>/<FixedHomePosition>
-    ns1__GetNodesResponse->PTZNode->FixedHomePosition = soap_new_xsd__boolean(soap, -1);
+    ns1__GetNodesResponse->PTZNode[i].FixedHomePosition = soap_new_xsd__boolean(soap, -1);
+    ns1__GetNodesResponse->PTZNode[i].FixedHomePosition = xsd__boolean__false_;
 
     // <PTZNode>/<Name>
-    ns1__GetNodesResponse->PTZNode->Name = soap_strdup(soap, "PTZ");
+    ns1__GetNodesResponse->PTZNode[i].Name = soap_strdup(soap, "PTZ");
 
     // <PTZNode>/<SupportedPTZSpaces>
-    // ns1__GetNodesResponse->PTZNode->SupportedPTZSpaces = soap_new_req_
+    ns1__GetNodesResponse->PTZNode[i].SupportedPTZSpaces = soap_new_tt__PTZSpaces(soap, -1);
+    soap_default_tt__PTZSpaces(soap, ns1__GetNodesResponse->PTZNode->SupportedPTZSpaces);
+    // <PTZNode>/<SupportedPTZSpaces>/<AbsolutePanTiltPositionSpace>
+    ns1__GetNodesResponse->PTZNode[i].SupportedPTZSpaces->AbsolutePanTiltPositionSpace = soap_new_tt__Space2DDescription(soap, -1);
+    // <PTZNode>/<SupportedPTZSpaces>/<AbsolutePanTiltPositionSpace>/<URI>
+    ns1__GetNodesResponse->PTZNode[i].SupportedPTZSpaces->AbsolutePanTiltPositionSpace->URI = soap_strdup(soap, "http://www.onvif.org/ver10/tptz/PanTiltSpaces/Position/2D/Absolute");
+    // <PTZNode>/<SupportedPTZSpaces>/<AbsolutePanTiltPositionSpace>/<XRange>
+    int x_min = rk_param_get_int("ptz.pan_min", 0) / 180.0;
+    int x_max = rk_param_get_int("ptz.pan_max", 0) / 180.0;
+    int y_min = rk_param_get_int("ptz.tilt_min", 0) / 180.0;
+    int y_max = rk_param_get_int("ptz.tilt_max", 0) / 180.0;
+    ns1__GetNodesResponse->PTZNode[i].SupportedPTZSpaces->AbsolutePanTiltPositionSpace->XRange = soap_new_tt__FloatRange(soap, -1);
+    ns1__GetNodesResponse->PTZNode[i].SupportedPTZSpaces->AbsolutePanTiltPositionSpace->XRange->Min = x_min;
+    ns1__GetNodesResponse->PTZNode[i].SupportedPTZSpaces->AbsolutePanTiltPositionSpace->XRange->Max = x_max;
+    ns1__GetNodesResponse->PTZNode[i].SupportedPTZSpaces->AbsolutePanTiltPositionSpace->YRange = soap_new_tt__FloatRange(soap, -1);
+    ns1__GetNodesResponse->PTZNode[i].SupportedPTZSpaces->AbsolutePanTiltPositionSpace->YRange->Min = y_min;
+    ns1__GetNodesResponse->PTZNode[i].SupportedPTZSpaces->AbsolutePanTiltPositionSpace->YRange->Max = y_max;
+    
+    // <PTZNode>/<SupportedPTZSpaces>/<AbsoluteZoomPositionSpace>
+    // 暂不支持缩放
+    
+    // <PTZNode>/<SupportedPTZSpaces>/<RelativePanTiltTranslationSpace>
+    ns1__GetNodesResponse->PTZNode[i].SupportedPTZSpaces->RelativePanTiltTranslationSpace = soap_new_tt__Space2DDescription(soap, -1);
+    // <PTZNode>/<SupportedPTZSpaces>/<RelativePanTiltTranslationSpace>/<URI>
+    ns1__GetNodesResponse->PTZNode[i].SupportedPTZSpaces->RelativePanTiltTranslationSpace->URI = soap_strdup(soap, "http://www.onvif.org/ver10/tptz/PanTiltSpaces/Translation/2D/Relative");
+    // <PTZNode>/<SupportedPTZSpaces>/<RelativePanTiltTranslationSpace>/<XRange>
+    ns1__GetNodesResponse->PTZNode[i].SupportedPTZSpaces->RelativePanTiltTranslationSpace->XRange = soap_new_tt__FloatRange(soap, -1);
+    ns1__GetNodesResponse->PTZNode[i].SupportedPTZSpaces->RelativePanTiltTranslationSpace->XRange->Min = x_min;
+    ns1__GetNodesResponse->PTZNode[i].SupportedPTZSpaces->RelativePanTiltTranslationSpace->XRange->Max = x_max;
+    ns1__GetNodesResponse->PTZNode[i].SupportedPTZSpaces->RelativePanTiltTranslationSpace->YRange = soap_new_tt__FloatRange(soap, -1);
+    ns1__GetNodesResponse->PTZNode[i].SupportedPTZSpaces->RelativePanTiltTranslationSpace->YRange->Min = y_min;
+    ns1__GetNodesResponse->PTZNode[i].SupportedPTZSpaces->RelativePanTiltTranslationSpace->YRange->Max = y_max;
 
-    
-    
+    // <PTZNode>/<SupportedPTZSpaces>/<RelativeZoomTranslationSpace>
+    // 暂不支持缩放
+
+    // <PTZNode>/<SupportedPTZSpaces>/<ContinuousPanTiltVelocitySpace>
+    // 暂不支持连续移动
+
+    // <PTZNode>/<SupportedPTZSpaces>/<ContinuousZoomVelocitySpace>
+    // 暂不支持缩放
+
+    // <PTZNode>/<SupportedPTZSpaces>/<PanTiltSpeedSpace>
+    // 暂不支持速度
+
+    // <PTZNode>/<SupportedPTZSpaces>/<ZoomSpeedSpace>
+    // 暂不支持缩放
+
+    // <PTZNode>/<Extension>
+    // 暂不支持扩展
+
     return SOAP_OK;
 }
 
@@ -97,7 +153,7 @@ SOAP_FMAC5 int SOAP_FMAC6 __ns1__RelativeMove(struct soap* soap, struct _ns1__Re
     float delta_x = ns1__RelativeMove->Translation->PanTilt->x;
     float delta_y = ns1__RelativeMove->Translation->PanTilt->y;
 
-    LOG_DEBUG("delta_x: %f, delta_y: %f", delta_x. delta_y);
+    LOG_DEBUG("delta_x: %f, delta_y: %f", delta_x, delta_y);
     
     return SOAP_OK;
 }
