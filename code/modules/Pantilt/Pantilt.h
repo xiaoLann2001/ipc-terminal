@@ -27,6 +27,9 @@ public:
 
     void reset();
 
+    // Onvif interface
+    void relativeMove(float delta_x, float delta_y);
+
 private:
     // 当前Pan角度，范围：-180°~180°，角度大于0表示向左，小于0表示向右
     int pan_angle = 0;

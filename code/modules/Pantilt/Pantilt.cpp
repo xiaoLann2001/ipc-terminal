@@ -164,6 +164,34 @@ void Pantilt::reset() {
 }
 
 /**
+ * @brief Onvif 调用接口，相对移动
+*/
+void Pantilt::relativeMove(float delta_x, float delta_y) {
+    // 浮点数转换为角度
+    int delta_pan = static_cast<int>(delta_x * (right_limit - left_limit) / 2);
+    int delta_tilt = static_cast<int>(delta_y * (down_limit - up_limit) / 2);
+
+    // 限制旋转步长
+    if (delta_pan < -pan_step_limit) {
+        delta_pan = -pan_step_limit;
+    } else if (delta_pan > pan_step_limit) {
+        delta_pan = pan_step_limit;
+    }
+    // 限制俯仰步长
+    if (delta_tilt < -tilt_step_limit) {
+        delta_tilt = -tilt_step_limit;
+    } else if (delta_tilt > tilt_step_limit) {
+        delta_tilt = tilt_step_limit;
+    }
+
+    int pan = pan_angle - delta_pan;
+    int tilt = tilt_angle + delta_tilt;
+
+    setPan(pan);
+    setTilt(tilt);
+}
+
+/**
  * @brief 设置俯仰角度。
  * 
  * @param target_angle 目标角度。

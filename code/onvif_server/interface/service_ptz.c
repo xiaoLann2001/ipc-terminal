@@ -1,6 +1,8 @@
 #include "soapH.h"
 #include "soapStub.h"
 
+#include "global.h"
+
 /** Web service operation '__ns1__GetConfigurations' implementation, should return SOAP_OK or error code */
 SOAP_FMAC5 int SOAP_FMAC6 __ns1__GetConfigurations(struct soap* soap, struct _ns1__GetConfigurations *ns1__GetConfigurations, struct _ns1__GetConfigurationsResponse *ns1__GetConfigurationsResponse) {
     return SOAP_OK;
@@ -38,6 +40,25 @@ SOAP_FMAC5 int SOAP_FMAC6 __ns1__GetConfiguration(struct soap* soap, struct _ns1
 
 /** Web service operation '__ns1__GetNodes' implementation, should return SOAP_OK or error code */
 SOAP_FMAC5 int SOAP_FMAC6 __ns1__GetNodes(struct soap* soap, struct _ns1__GetNodes *ns1__GetNodes, struct _ns1__GetNodesResponse *ns1__GetNodesResponse) {
+    LOG_DEBUG("__ns1__GetNodes");
+
+    // <PTZNode>
+    ns1__GetNodesResponse->PTZNode = soap_new___ns1__GetNodes(soap, -1);
+
+    // <PTZNode>/<token>
+    ns1__GetNodesResponse->PTZNode->token = soap_strdup(soap, "PTZNodeToken1");
+    
+    // <PTZNode>/<FixedHomePosition>
+    ns1__GetNodesResponse->PTZNode->FixedHomePosition = soap_new_xsd__boolean(soap, -1);
+
+    // <PTZNode>/<Name>
+    ns1__GetNodesResponse->PTZNode->Name = soap_strdup(soap, "PTZ");
+
+    // <PTZNode>/<SupportedPTZSpaces>
+    // ns1__GetNodesResponse->PTZNode->SupportedPTZSpaces = soap_new_req_
+
+    
+    
     return SOAP_OK;
 }
 
@@ -73,6 +94,11 @@ SOAP_FMAC5 int SOAP_FMAC6 __ns1__ContinuousMove(struct soap* soap, struct _ns1__
 
 /** Web service operation '__ns1__RelativeMove' implementation, should return SOAP_OK or error code */
 SOAP_FMAC5 int SOAP_FMAC6 __ns1__RelativeMove(struct soap* soap, struct _ns1__RelativeMove *ns1__RelativeMove, struct _ns1__RelativeMoveResponse *ns1__RelativeMoveResponse) {
+    float delta_x = ns1__RelativeMove->Translation->PanTilt->x;
+    float delta_y = ns1__RelativeMove->Translation->PanTilt->y;
+
+    LOG_DEBUG("delta_x: %f, delta_y: %f", delta_x. delta_y);
+    
     return SOAP_OK;
 }
 
