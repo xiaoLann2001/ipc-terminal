@@ -16,7 +16,7 @@ SOAP_FMAC5 int SOAP_FMAC6 __tds__GetServiceCapabilities(struct soap* soap, struc
 
 /** Web service operation '__tds__GetDeviceInformation' implementation, should return SOAP_OK or error code */
 SOAP_FMAC5 int SOAP_FMAC6 __tds__GetDeviceInformation(struct soap* soap, struct _tds__GetDeviceInformation *tds__GetDeviceInformation, struct _tds__GetDeviceInformationResponse *tds__GetDeviceInformationResponse) {
-    LOG_DEBUG("__tds__GetDeviceInformation");
+    LOG_DEBUG("__tds__GetDeviceInformation\n");
 
     tds__GetDeviceInformationResponse->Manufacturer = soap_strdup(soap, "CQUPT-YF403");
     tds__GetDeviceInformationResponse->Model = soap_strdup(soap, "RV1106-IPCTERMINAL");
@@ -199,7 +199,7 @@ SOAP_FMAC5 int SOAP_FMAC6 __tds__SetAuthFailureWarningConfiguration(struct soap*
 
 /** Web service operation '__tds__GetCapabilities' implementation, should return SOAP_OK or error code */
 SOAP_FMAC5 int SOAP_FMAC6 __tds__GetCapabilities(struct soap* soap, struct _tds__GetCapabilities *tds__GetCapabilities, struct _tds__GetCapabilitiesResponse *tds__GetCapabilitiesResponse) {
-    LOG_DEBUG("__tds__GetCapabilities");
+    LOG_DEBUG("__tds__GetCapabilities\n");
     
 	char ipaddr[IP_ADDR_LENGTH] = { 0 };
 

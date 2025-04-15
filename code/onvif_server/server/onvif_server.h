@@ -1,5 +1,5 @@
-#ifndef ONVIF_SERVER_H
-#define ONVIF_SERVER_H
+#ifndef __ONVIF_SERVER_H__
+#define __ONVIF_SERVER_H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -13,4 +13,4 @@ void onvif_server_deinit();
 }
 #endif
 
-#endif // ONVIF_SERVER_H
+#endif // __ONVIF_SERVER_H__

@@ -147,19 +147,34 @@ int pwm_set_polarity(enum PWM_num pwm_num, const char* polarity) {
 }
 
 /**
- * @brief 启用/禁用 PWM 通道.
+ * @brief 启用 PWM 通道.
  *
  * @param pwm_num PWM 通道号.
- * @param enable 1 = 启用，0 = 禁用.
  * @return 成功返回 0，失败返回 -1.
  */
-int pwm_enable(enum PWM_num pwm_num, int enable) {
+int pwm_enable(enum PWM_num pwm_num) {
     char path[64];
     char value[8];
     
-    // Write enable/disable to sysfs
+    // Write enable to sysfs
     pwm_generate_path(path, pwm_num, "enable");
-    sprintf(value, "%d", enable);
+    sprintf(value, "%d", 1);
+    return sysfs_write(path, value);
+}
+
+/**
+ * @brief 停止 PWM 输出.
+ *
+ * @param pwm_num PWM 通道号.
+ * @return 成功返回 0，失败返回 -1.
+ */
+int pwm_disable(enum PWM_num pwm_num) {
+    char path[64];
+    char value[8];
+    
+    // Write disable to sysfs
+    pwm_generate_path(path, pwm_num, "enable");
+    sprintf(value, "%d", 0);
     return sysfs_write(path, value);
 }
 

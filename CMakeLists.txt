@@ -63,7 +63,8 @@ file(GLOB SRC_FILES
     ${MODULES_DIR}/Led/Led.cpp
     ${MODULES_DIR}/Led/gpio.c
 
-    ${MODULES_DIR}/Pantilt/Pantilt.cpp
+    # ${MODULES_DIR}/Pantilt/Pantilt.cpp
+    ${MODULES_DIR}/Pantilt/pantilt.c
     ${MODULES_DIR}/Pantilt/pwm.c
 
     ${MODULES_DIR}/Display/Display.cpp

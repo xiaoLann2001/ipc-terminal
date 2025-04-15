@@ -14,6 +14,16 @@ extern "C" {
 
 #define RV1106_MAX
 
+#define PWM8_PERIOD 20000000    // 20ms
+#define PWM8_MIN    500000      // 0.5ms 向上
+#define PWM8_MID    1500000     // 1.5ms 复位
+#define PWM8_MAX    2500000     // 2.5ms 向下
+
+#define PWM9_PERIOD 20000000    // 20ms
+#define PWM9_MIN    500000      // 0.5ms 向上
+#define PWM9_MID    1500000     // 1.5ms 复位
+#define PWM9_MAX    2500000     // 2.5ms 向下
+
 #ifdef RV1106_MAX
 enum PWM_num {
     PWM8_M1 = 8,
@@ -94,15 +104,24 @@ int pwm_set_duty_cycle(enum PWM_num pwm_num, unsigned int duty_cycle_ns);
 int pwm_set_polarity(enum PWM_num pwm_num, const char* polarity);
 
 /**
- * @brief 启动或停止 PWM 输出.
+ * @brief 启动PWM 输出.
  *
- * 此函数用于启用或禁用指定的 PWM 通道.
+ * 此函数用于启用指定的 PWM 通道.
  *
  * @param pwm_num PWM 通道号.
- * @param enable 1 为启用，0 为禁用.
  * @return 成功返回 0，失败返回 -1.
  */
-int pwm_enable(enum PWM_num pwm_num, int enable);
+int pwm_enable(enum PWM_num pwm_num);
+
+/**
+ * @brief 停止 PWM 输出.
+ *
+ * 此函数用于禁用指定的 PWM 通道.
+ *
+ * @param pwm_num PWM 通道号.
+ * @return 成功返回 0，失败返回 -1.
+ */
+int pwm_disable(enum PWM_num pwm_num);
 
 /**
  * @brief 获取 PWM 通道的状态.
