@@ -103,6 +103,8 @@
         "numbers": "cpp",
         "semaphore": "cpp",
         "stop_token": "cpp",
-        "soapstub.h": "c"
+        "soapstub.h": "c",
+        "helper_ptz.h": "c",
+        "stdbool.h": "c"
     }
 }

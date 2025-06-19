@@ -4,11 +4,15 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -DWITH_NO_C_LOCALE")
 # 常用功能库
 set(COMMON_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../common)
 
+# 模块板级实现
+set(MODULES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../modules)
+
 # 包含头文件路径
 include_directories(${COMMON_DIR})
 include_directories(${COMMON_DIR}/log)
 include_directories(${COMMON_DIR}/param)
 include_directories(${COMMON_DIR}/utils)
+include_directories(${MODULES_DIR}/Pantilt)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/server)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/soap)
 
@@ -28,7 +32,7 @@ set(SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/interface/service_device.c
     ${CMAKE_CURRENT_SOURCE_DIR}/interface/service_media.c
     ${CMAKE_CURRENT_SOURCE_DIR}/interface/service_ptz.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/interface/service_event.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/interface/helper_ptz.c
 
     # 工具函数
     ${COMMON_DIR}/utils/utils.c

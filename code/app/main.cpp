@@ -3,7 +3,8 @@
 #include "Network.h"
 #include "Control.h"
 #include "Led.h"
-#include "Pantilt.h"
+// #include "Pantilt.h"
+#include "pantilt.h"
 #include "Display.h"
 #include "Video.h"
 
@@ -16,6 +17,12 @@
 #define PANTILT_ENABLE 1
 #define DISPLAY_ENABLE 1
 #define VIDEO_ENABLE 1
+
+#ifdef __cplusplus
+extern "C" {
+    struct Pantilt g_pantilt = {0};
+}
+#endif
 
 int rkipc_log_level = LOG_LEVEL_DEBUG;
 char ini_path[] = "ipc-terminal.ini";
@@ -59,12 +66,15 @@ int main(int argc, char *argv[]) {
 #if PANTILT_ENABLE
     // Pantilt 模块初始化
     LOG_DEBUG("Pantilt module initializing\n");
-    Pantilt *pantilt = new Pantilt();
-    control->registerControlFunction(ID_PANTILT, OP_PANTILT_UP, std::bind(&Pantilt::up, pantilt, std::placeholders::_1));
-    control->registerControlFunction(ID_PANTILT, OP_PANTILT_DOWN, std::bind(&Pantilt::down, pantilt, std::placeholders::_1));
-    control->registerControlFunction(ID_PANTILT, OP_PANTILT_LEFT, std::bind(&Pantilt::left, pantilt, std::placeholders::_1));
-    control->registerControlFunction(ID_PANTILT, OP_PANTILT_RIGHT, std::bind(&Pantilt::right, pantilt, std::placeholders::_1));
-    control->registerControlFunction(ID_PANTILT, OP_PANTILT_RESET, std::bind(&Pantilt::reset, pantilt));
+    // Pantilt *pantilt = new Pantilt();
+    // control->registerControlFunction(ID_PANTILT, OP_PANTILT_UP, std::bind(&Pantilt::up, pantilt, std::placeholders::_1));
+    // control->registerControlFunction(ID_PANTILT, OP_PANTILT_DOWN, std::bind(&Pantilt::down, pantilt, std::placeholders::_1));
+    // control->registerControlFunction(ID_PANTILT, OP_PANTILT_LEFT, std::bind(&Pantilt::left, pantilt, std::placeholders::_1));
+    // control->registerControlFunction(ID_PANTILT, OP_PANTILT_RIGHT, std::bind(&Pantilt::right, pantilt, std::placeholders::_1));
+    // control->registerControlFunction(ID_PANTILT, OP_PANTILT_RESET, std::bind(&Pantilt::reset, pantilt));
+
+    pantilt_init(&g_pantilt);
+
 #endif
 #if DISPLAY_ENABLE
     // 显示类初始化
@@ -89,7 +99,7 @@ int main(int argc, char *argv[]) {
     video->signal_video_frame.connect(display, &Display::push_frame);
 #endif
 #if VIDEO_ENABLE && PANTILT_ENABLE
-    video->signal_adjust_pantilt.connect(pantilt, &Pantilt::onAjustPantilt);
+    // video->signal_adjust_pantilt.connect(pantilt, &Pantilt::onAjustPantilt);
 #endif
 #if ONVIF_SERVER_ENABLE
     // ONVIF 服务初始化
@@ -121,7 +131,8 @@ int main(int argc, char *argv[]) {
         LOG_DEBUG("Display module deinitialized\n");
 #endif
 #if PANTILT_ENABLE
-        delete pantilt;
+        // delete pantilt;
+        pantilt_deinit(&g_pantilt);
         LOG_DEBUG("Pantilt module deinitialized\n");
 #endif
 #if LED_ENABLE
