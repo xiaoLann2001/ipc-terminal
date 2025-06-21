@@ -46,6 +46,7 @@ link_directories(${CMAKE_CURRENT_SOURCE_DIR}/lib/arm-rockchip830-linux-uclibcgnu
 # 源码文件收集
 # =============================================================================
 set(APP_CXXFILE ${CMAKE_CURRENT_SOURCE_DIR}/code/app/main.cpp)
+set(CLASS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/code/class)
 set(COMMON_DIR ${CMAKE_CURRENT_SOURCE_DIR}/code/common)
 set(MODULES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/code/modules)
 set(ONVIF_SERVER_DIR ${CMAKE_CURRENT_SOURCE_DIR}/code/onvif_server)
@@ -56,6 +57,8 @@ file(GLOB SRC_FILES
     ${COMMON_DIR}/param/*.c
 
     ${MODULES_DIR}/Network/Network.cpp
+    ${MODULES_DIR}/Network/ntp.c
+    ${MODULES_DIR}/Network/NetworkModule.cpp
     ${MODULES_DIR}/Network/ntp.c
 
     ${MODULES_DIR}/Control/Control.cpp
@@ -142,6 +145,9 @@ target_include_directories(${PROJECT_NAME} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include/freetype2
     
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/rknpu2/include
+
+    ${CLASS_DIR}/AbstractModule
+    ${CLASS_DIR}/TestClass
 
     ${COMMON_DIR}
     ${COMMON_DIR}/log
