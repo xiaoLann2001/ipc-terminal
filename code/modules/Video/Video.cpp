@@ -2,11 +2,7 @@
 
 Video::Video()
 {
-
     video_run_ = true;
-    pipe0_run_ = true;
-    pipe1_run_ = true;
-    pipe2_run_ = true;
 
     rkaiq_init();
     rkmpi_sys_init();
@@ -15,7 +11,7 @@ Video::Video()
 
     video_thread0 = std::make_unique<std::thread>(&Video::video_pipe0, this);
     video_thread1 = std::make_unique<std::thread>(&Video::video_pipe1, this);
-    
+
     int ai_enable = rk_param_get_int("ai:enable", 0);
     if (ai_enable) {
         video_thread2 = std::make_unique<std::thread>(&Video::video_pipe2, this);
@@ -24,15 +20,14 @@ Video::Video()
 
 Video::~Video()
 {
-    {
-        std::lock_guard<std::mutex> lock(mtx_video);
-        video_run_ = false;
-    }
-
-    if (video_thread0 && video_thread2->joinable()) video_thread2->join();
-    if (video_thread0 && video_thread1->joinable()) video_thread1->join();
+    LOG_DEBUG("Video deinitializing\n");
+    
+    video_run_ = false;
+    
+    if (video_thread2 && video_thread2->joinable()) video_thread2->join();
+    if (video_thread1 && video_thread1->joinable()) video_thread1->join();
     if (video_thread0 && video_thread0->joinable()) video_thread0->join();
-
+    
     rtsp_deinit();
     vi_dev_deinit();
     rkmpi_sys_deinit();
@@ -64,7 +59,7 @@ void Video::video_pipe0()
 
     rkipc_osd_init();
 
-    while (video_run_ && pipe0_run_)
+    while (video_run_)
     {
         // 获取编码后的帧，发送到 RTSP 服务器
         rtsp_send_frame(vencChannelId, &stFrame);
@@ -128,7 +123,7 @@ void Video::video_pipe1()
     vi_chn_init(pipeId, viChannelId, video_width, video_height, RK_FMT_YUV420SP);
     venc_init(vencChannelId, video_width, video_height, RK_VIDEO_ID_AVC, RK_FMT_RGB888);
 
-    while (video_run_ && pipe1_run_)
+    while (video_run_)
     {
         void *vi_data = vi_get_frame(pipeId, viChannelId, video_width, video_height, &stViFrame);
 
@@ -145,7 +140,7 @@ void Video::video_pipe1()
                     cv::Scalar(0, 255, 0), 1);
 #endif
         memcpy(venc_data, frame.data, video_width * video_height * 3);
-        signal_video_frame.emit(frame);
+        // signal_video_frame.emit(frame);
 
         venc_encode_frame(vencChannelId, &venc_frame);
         rtsp_send_frame(vencChannelId, &stFrame);
@@ -289,7 +284,7 @@ void Video::video_pipe2()
 
         vi_chn_init(pipeId, viChannelId, video_width, video_height, RK_FMT_YUV420SP);
 
-        while (video_run_ && pipe2_run_)
+        while (video_run_)
         {
             // usleep(100 * 1000);
             // get vi frame
@@ -455,7 +450,7 @@ void Video::video_pipe2()
                 // LOG_DEBUG("delta_pan: %d, delta_tilt: %d\n", delta_pan, delta_tilt);
 
                 // 发射信号来调整云台位置
-                signal_adjust_pantilt.emit(delta_pan, delta_tilt);  // 传递偏移量给舵机控制类
+                // signal_adjust_pantilt.emit(delta_pan, delta_tilt);  // 传递偏移量给舵机控制类
             }
         }
 
@@ -464,133 +459,4 @@ void Video::video_pipe2()
         release_yolov5_model(&rknn_app_ctx);
         deinit_post_process();
     }
-}
-
-void Video::video_pipe0_start() {
-    {
-        // 线程2依赖线程0
-        std::lock_guard<std::mutex> lock(mtx_video);
-        // 若已经启动则直接返回
-        if (pipe0_run_) {
-            LOG_ERROR("Video pipe 0 already started\n");
-            return;
-        }
-        pipe0_run_ = true;  // 设置运行标志位
-        video_thread0 = std::make_unique<std::thread>(&Video::video_pipe0, this);
-        // 若 AI 使能则启动 AI 线程
-        int ai_enable = rk_param_get_int("ai:enable", 0);
-        if (ai_enable && !pipe2_run_) {
-            pipe2_run_ = true;
-            video_thread2 = std::make_unique<std::thread>(&Video::video_pipe2, this);
-        }
-    }
-
-    LOG_DEBUG("Video pipe 0 started\n");
-}
-
-void Video::video_pipe0_stop() {
-    {
-        // 线程2依赖线程0
-        std::lock_guard<std::mutex> lock(mtx_video);
-        if (!pipe0_run_) {
-            LOG_ERROR("Video pipe 0 already stopped\n");
-            return;
-        }
-        pipe2_run_ = false;
-        pipe0_run_ = false;
-    }
-
-    if (video_thread2 && video_thread2->joinable()) video_thread2->join();
-    if (video_thread2 && video_thread0->joinable()) video_thread0->join();
-
-    LOG_DEBUG("Video pipe 0 stopped\n");
-}
-
-void Video::video_pipe0_restart() {
-    video_pipe0_stop();
-    video_pipe0_start();
-    LOG_DEBUG("Video pipe 0 restarted\n");
-}
-
-void Video::video_pipe1_start() {
-    {
-        std::lock_guard<std::mutex> lock(mtx_video);
-        if (pipe1_run_) {
-            LOG_ERROR("Video pipe 1 already started\n");
-            return;
-        }
-        pipe1_run_ = true;
-    }
-
-    video_thread1 = std::make_unique<std::thread>(&Video::video_pipe1, this);
-
-    LOG_DEBUG("Video pipe 1 started\n");
-}
-
-void Video::video_pipe1_stop() {
-    {
-        std::lock_guard<std::mutex> lock(mtx_video);
-        if (!pipe1_run_) {
-            LOG_ERROR("Video pipe 1 already stopped\n");
-            return;
-        }
-        pipe1_run_ = false;
-    }
-
-    if (video_thread1 && video_thread1->joinable()) video_thread1->join();
-
-    LOG_DEBUG("Video pipe 1 stopped\n");
-}
-
-void Video::video_pipe1_restart() {
-    video_pipe1_stop();
-    video_pipe1_start();
-    LOG_DEBUG("Video pipe 1 restarted\n");
-}
-
-void Video::video_pipe2_start() {
-    {
-        // 线程2依赖线程0
-        std::lock_guard<std::mutex> lock(mtx_video);
-        int ai_enable = rk_param_get_int("ai:enable", 0);
-        // 若ai未使能或者线程2已经启动或者线程1未启动则直接返回
-        if (!ai_enable) {
-            LOG_ERROR("AI is disabled\n");
-            return;
-        }
-        if (pipe2_run_) {
-            LOG_ERROR("Video pipe 2 already started\n");
-            return;
-        }
-        if (!pipe0_run_) {
-            LOG_ERROR("Video pipe 0 not started\n");
-            return;
-        }
-        pipe2_run_ = true;  // 设置运行标志位
-        video_thread2 = std::make_unique<std::thread>(&Video::video_pipe2, this);
-    }
-
-    LOG_DEBUG("Video pipe 2 started\n");
-}
-
-void Video::video_pipe2_stop() {
-    {
-        // 线程2依赖线程0
-        std::lock_guard<std::mutex> lock(mtx_video);
-        if (!pipe2_run_) {
-            LOG_ERROR("Video pipe 2 already stopped\n");
-            return;
-        }
-        pipe2_run_ = false;
-    }
-
-    if (video_thread2 && video_thread2->joinable()) video_thread2->join();
-
-    LOG_DEBUG("Video pipe 2 stopped\n");
-}
-
-void Video::video_pipe2_restart() {
-    video_pipe2_stop();
-    video_pipe2_start();
-    LOG_DEBUG("Video pipe 2 restarted\n");
 }

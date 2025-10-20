@@ -220,7 +220,7 @@ int venc_init(int chnId, int width, int height, RK_CODEC_ID_E enType, PIXEL_FORM
 
 	venc_chn_attr.stRcAttr.enRcMode = VENC_RC_MODE_H264CBR;
 	venc_chn_attr.stRcAttr.stH264Cbr.u32BitRate = 3 * 1024;
-	venc_chn_attr.stRcAttr.stH264Cbr.u32Gop = 10;
+	venc_chn_attr.stRcAttr.stH264Cbr.u32Gop = 25;
 	RK_MPI_VENC_CreateChn(chnId, &venc_chn_attr);
 
 	memset(&stRecvParam, 0, sizeof(VENC_RECV_PIC_PARAM_S));

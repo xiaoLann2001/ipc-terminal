@@ -1,6 +1,8 @@
 #ifndef _LUCKFOX_RTSP_H_
 #define _LUCKFOX_RTSP_H_
 
+#include "global.h"
+
 #include "rtsp_demo.h"
 #include "sample_comm.h"
 

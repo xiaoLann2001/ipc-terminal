@@ -1,66 +1,62 @@
 #pragma once
 
 #include <string>
-#include <any>
 #include <vector>
 #include <mutex>
 #include <algorithm>
+#include "Any.h"   // 引入自实现的 Any
 
+// ---------------------------
 // 通用事件结构体
-template<typename Payload>
+// ---------------------------
 struct Event {
-    std::string name;     // 事件名称
-    Payload data;         // 数据
-    std::string origin;   // 来源模块名
+    std::string name;   // 事件名称
+    Any data;           // 任意类型数据
+    std::string origin; // 来源模块
 
-    Event(const std::string& n, const Payload& d, const std::string& o)
+    Event(const std::string& n = "", const Any& d = Any(), const std::string& o = "")
         : name(n), data(d), origin(o) {}
 };
 
+// ---------------------------
 // 前向声明
-template<typename Payload>
+// ---------------------------
 class Publisher;
+class Observer;
 
+// ---------------------------
 // 观察者接口
-template<typename Payload>
+// ---------------------------
 class Observer {
 public:
-    virtual ~Observer() = default;
-    
-    virtual void subscribe(Publisher<Payload>* pub) {
-        if (pub) {
-            pub->attach(this);
-        }
-    }
+    virtual ~Observer() {}
 
-    virtual void unsubscribe(Publisher<Payload>* pub) {
-        if (pub) {
-            pub->detach(this);
-        }
-    }
+    virtual void subscribe(Publisher* pub);
+    virtual void unsubscribe(Publisher* pub);
 
-    virtual void update(const std::string& sender, Event<Payload>& evt) = 0;
+    virtual void update(const std::string& sender, Event& evt) = 0;
 };
 
+// ---------------------------
 // 发布者类
-template<typename Payload>
+// ---------------------------
 class Publisher {
 public:
     explicit Publisher(const std::string& name)
-        : name_(name) {}
+        : name_(name), blocked_(false) {}
 
-    virtual ~Publisher() = default;
+    virtual ~Publisher() {}
 
     std::string name() const { return name_; }
 
-    void attach(Observer<Payload>* obs) {
+    void attach(Observer* obs) {
         std::lock_guard<std::mutex> lock(mutex_);
         if (obs && std::find(observers_.begin(), observers_.end(), obs) == observers_.end()) {
             observers_.push_back(obs);
         }
     }
 
-    void detach(Observer<Payload>* obs) {
+    void detach(Observer* obs) {
         std::lock_guard<std::mutex> lock(mutex_);
         observers_.erase(std::remove(observers_.begin(), observers_.end(), obs), observers_.end());
     }
@@ -70,22 +66,34 @@ public:
         blocked_ = block;
     }
 
-    void notify(const std::string& eventName, const Payload& data = Payload()) {
-        std::vector<Observer<Payload>*> tempObservers;
+    void notify(const std::string& eventName, const Any& data = Any()) {
+        std::vector<Observer*> temp;
         {
             std::lock_guard<std::mutex> lock(mutex_);
             if (blocked_) return;
-            tempObservers = observers_; // 拷贝一份，解锁后再通知
+            temp = observers_;
         }
-        Event<Payload> evt(eventName, data, this->name());
-        for (auto* obs : tempObservers) {
-            if (obs) obs->update(this->name(), evt);
+
+        Event evt(eventName, data, name_);
+        for (auto* obs : temp) {
+            if (obs) obs->update(name_, evt);
         }
     }
 
 private:
     std::string name_;
-    std::vector<Observer<Payload>*> observers_;
+    std::vector<Observer*> observers_;
     std::mutex mutex_;
-    bool blocked_ = false;
+    bool blocked_;
 };
+
+// ---------------------------
+// 订阅/取消订阅实现
+// ---------------------------
+inline void Observer::subscribe(Publisher* pub) {
+    if (pub) pub->attach(this);
+}
+
+inline void Observer::unsubscribe(Publisher* pub) {
+    if (pub) pub->detach(this);
+}

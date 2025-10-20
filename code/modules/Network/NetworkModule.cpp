@@ -4,7 +4,7 @@
  * @brief NetworkModule 类构造函数。
  */
 NetworkModule::NetworkModule() 
-    : AbstractModule<std::string>("NetworkModuleModule"),
+    : AbstractModule("NetworkModuleModule"),
       is_connected_(false), 
       network_run_(true) {
 
@@ -21,7 +21,7 @@ NetworkModule::NetworkModule()
  * @param server_port 服务器端口。
  */
 NetworkModule::NetworkModule(const std::string& server_ip, int server_port)
-    : AbstractModule<std::string>("NetworkModuleModule"), 
+    : AbstractModule("NetworkModuleModule"), 
       server_ip(server_ip), 
       server_port(server_port), 
       is_connected_(false),

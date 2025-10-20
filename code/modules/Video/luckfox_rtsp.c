@@ -5,7 +5,7 @@ rtsp_demo_handle g_rtsplive = NULL;
 rtsp_session_handle g_rtsp_session_0, g_rtsp_session_1;
 
 int rtsp_init() {
-	g_rtsplive = create_rtsp_demo(554);
+	g_rtsplive = create_rtsp_demo(8554);
 	g_rtsp_session_0 = rtsp_new_session(g_rtsplive, RTSP_URL_0);
 	g_rtsp_session_1 = rtsp_new_session(g_rtsplive, RTSP_URL_1);
 	rtsp_set_video(g_rtsp_session_0, RTSP_CODEC_ID_VIDEO_H264, NULL, 0);

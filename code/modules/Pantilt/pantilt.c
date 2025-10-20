@@ -10,6 +10,14 @@
 #include "pwm.h"
 #include "global.h"
 
+#ifdef __cplusplus
+extern "C" {
+    struct Pantilt g_pantilt = {0};
+}
+#endif
+
+struct Pantilt g_pantilt = {0};
+
 /**
  * @brief 将 x 映射到 PWM 占空比范围.
 */

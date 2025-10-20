@@ -23,7 +23,7 @@ project(ipc-terminal)
 # 查找依赖包
 # =============================================================================
 # OpenCV
-set(OpenCV_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib/cmake/opencv4")
+set(OpenCV_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/opencv/lib/cmake/opencv4)
 find_package(OpenCV REQUIRED)
 
 # PThread
@@ -41,46 +41,42 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/code/onvif_server onvif_server.out)
 # =============================================================================
 link_directories(${CMAKE_CURRENT_SOURCE_DIR}/lib)
 link_directories(${CMAKE_CURRENT_SOURCE_DIR}/lib/arm-rockchip830-linux-uclibcgnueabihf)
+link_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/opencv)
+link_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/live555)
 
 # =============================================================================
 # 源码文件收集
 # =============================================================================
-set(APP_CXXFILE ${CMAKE_CURRENT_SOURCE_DIR}/code/app/main.cpp)
-set(CLASS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/code/class)
-set(COMMON_DIR ${CMAKE_CURRENT_SOURCE_DIR}/code/common)
-set(MODULES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/code/modules)
-set(ONVIF_SERVER_DIR ${CMAKE_CURRENT_SOURCE_DIR}/code/onvif_server)
-
 file(GLOB SRC_FILES 
-    ${APP_CXXFILE}
+    ${CMAKE_CURRENT_SOURCE_DIR}/code/app/main.cpp
     
-    ${COMMON_DIR}/param/*.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/code/common/param/*.c
 
-    ${MODULES_DIR}/Network/Network.cpp
-    ${MODULES_DIR}/Network/ntp.c
-    ${MODULES_DIR}/Network/NetworkModule.cpp
-    ${MODULES_DIR}/Network/ntp.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/code/modules/Network/Network.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/code/modules/Network/ntp.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/code/modules/Network/NetworkModule.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/code/modules/Network/ntp.c
 
-    ${MODULES_DIR}/Control/Control.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/code/modules/Led/Led.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/code/modules/Led/gpio.c
 
-    ${MODULES_DIR}/Led/Led.cpp
-    ${MODULES_DIR}/Led/gpio.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/code/modules/Pantilt/pantilt.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/code/modules/Pantilt/pwm.c
 
-    # ${MODULES_DIR}/Pantilt/Pantilt.cpp
-    ${MODULES_DIR}/Pantilt/pantilt.c
-    ${MODULES_DIR}/Pantilt/pwm.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/code/modules/Display/Display.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/code/modules/Display/framebuffer.c
 
-    ${MODULES_DIR}/Display/Display.cpp
-    ${MODULES_DIR}/Display/framebuffer.c
-    
-    ${MODULES_DIR}/Video/Video.cpp
-    ${MODULES_DIR}/Video/luckfox_video.cpp
-    ${MODULES_DIR}/Video/luckfox_rgn_draw.cpp
-    ${MODULES_DIR}/Video/yolov5.cpp
-    ${MODULES_DIR}/Video/postprocess.cpp
-    ${MODULES_DIR}/Video/luckfox_rtsp.c
-    ${MODULES_DIR}/Video/luckfox_osd.c
-    ${MODULES_DIR}/Video/osd/*.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/code/modules/Video/Video.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/code/modules/Video/luckfox_video.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/code/modules/Video/luckfox_rgn_draw.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/code/modules/Video/yolov5.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/code/modules/Video/postprocess.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/code/modules/Video/luckfox_rtsp.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/code/modules/Video/luckfox_osd.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/code/modules/Video/osd/*.c
+
+    # RTSP server (live555 implementation of rtsp_demo.h)
+    ${CMAKE_CURRENT_SOURCE_DIR}/code/modules/Video/rtsp_demo_live555.cpp
 )
 
 # =============================================================================
@@ -119,9 +115,14 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     rockchip_mpp
     rkaiq
     pthread
-    rtsp
     freetype
     iconv
+    
+    # live555
+    liveMedia
+    groupsock
+    BasicUsageEnvironment
+    UsageEnvironment
 
     onvif_server
 )
@@ -142,28 +143,31 @@ target_include_directories(${PROJECT_NAME} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include/rkaiq/smartIr
     ${CMAKE_CURRENT_SOURCE_DIR}/include/rockchip
     ${CMAKE_CURRENT_SOURCE_DIR}/include/rknn
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/freetype2
     
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/freetype2
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/rknpu2/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdpartyopenssl/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/live555/include/liveMedia
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/live555/include/groupsock
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/live555/include/BasicUsageEnvironment
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/live555/include/UsageEnvironment
 
-    ${CLASS_DIR}/AbstractModule
-    ${CLASS_DIR}/TestClass
+    ${CMAKE_CURRENT_SOURCE_DIR}/code/class/AbstractModule
 
-    ${COMMON_DIR}
-    ${COMMON_DIR}/log
-    ${COMMON_DIR}/param
-    ${COMMON_DIR}/signal
-    ${COMMON_DIR}/utils
-    
-    ${MODULES_DIR}/Control
-    ${MODULES_DIR}/Display
-    ${MODULES_DIR}/Led
-    ${MODULES_DIR}/Network
-    ${MODULES_DIR}/Pantilt
-    ${MODULES_DIR}/Video
-    ${MODULES_DIR}/Video/osd
+    ${CMAKE_CURRENT_SOURCE_DIR}/code/common
+    ${CMAKE_CURRENT_SOURCE_DIR}/code/common/log
+    ${CMAKE_CURRENT_SOURCE_DIR}/code/common/param
+    ${CMAKE_CURRENT_SOURCE_DIR}/code/common/utils
 
-    ${ONVIF_SERVER_DIR}/server
+    ${CMAKE_CURRENT_SOURCE_DIR}/code/modules/Display
+    ${CMAKE_CURRENT_SOURCE_DIR}/code/modules/Led
+    ${CMAKE_CURRENT_SOURCE_DIR}/code/modules/Network
+    ${CMAKE_CURRENT_SOURCE_DIR}/code/modules/Pantilt
+    ${CMAKE_CURRENT_SOURCE_DIR}/code/modules/Video
+    ${CMAKE_CURRENT_SOURCE_DIR}/code/modules/Video/osd
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/code/onvif_server/server
 )
 
 # =============================================================================

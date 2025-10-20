@@ -18,7 +18,7 @@
 #include "ntp.h"
 #include "AbstractModule.h"
 
-class NetworkModule : public AbstractModule<std::string> {
+class NetworkModule : public AbstractModule {
 public:
     NetworkModule();
     NetworkModule(const std::string& server_ip, int server_port);

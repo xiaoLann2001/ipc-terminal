@@ -21,7 +21,7 @@ int rk_param_dump() {
 	const char *keys[32];
 	int section_keys;
 	int section_num = iniparser_getnsec(g_ini_d_);
-	LOG_DEBUG("section_num is %d\n", section_num);
+	// LOG_DEBUG("section_num is %d\n", section_num);
 
 	for (int i = 0; i < section_num; i++) {
 		section_name = iniparser_getsecname(g_ini_d_, i);
@@ -30,7 +30,7 @@ int rk_param_dump() {
 		// LOG_DEBUG("section_keys is %d\n", section_keys);
 		for (int j = 0; j < section_keys; j++) {
 			iniparser_getseckeys(g_ini_d_, section_name, keys);
-			LOG_DEBUG("%s = %s\n", keys[j], iniparser_getstring(g_ini_d_, keys[j], ""));
+			// LOG_DEBUG("%s = %s\n", keys[j], iniparser_getstring(g_ini_d_, keys[j], ""));
 		}
 		// LOG_DEBUG("section: %d load success\n", i);
 	}
@@ -91,7 +91,7 @@ int rk_param_set_string(const char *entry, const char *val) {
 }
 
 int rk_param_init(char *ini_path) {
-	LOG_DEBUG("%s\n", __func__);
+	// LOG_DEBUG("%s\n", __func__);
 	char cmd[256];
 	pthread_mutex_lock(&g_param_mutex);
 	g_ini_d_ = NULL;
@@ -99,7 +99,7 @@ int rk_param_init(char *ini_path) {
 		memcpy(g_ini_path_, ini_path, strlen(ini_path));
 	else
 		memcpy(g_ini_path_, "/userdata/rkipc.ini", strlen("/userdata/rkipc.ini"));
-	LOG_INFO("g_ini_path_ is %s\n", g_ini_path_);
+	// LOG_INFO("g_ini_path_ is %s\n", g_ini_path_);
 
 	g_ini_d_ = iniparser_load(g_ini_path_);
 	if (g_ini_d_ == NULL) {

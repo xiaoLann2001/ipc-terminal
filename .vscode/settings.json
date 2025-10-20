@@ -106,6 +106,8 @@
         "soapstub.h": "c",
         "helper_ptz.h": "c",
         "stdbool.h": "c",
-        "any": "cpp"
+        "any": "cpp",
+        "bitset": "cpp",
+        "rtsp_demo.h": "c"
     }
 }
